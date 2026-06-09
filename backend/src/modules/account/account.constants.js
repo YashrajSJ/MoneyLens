@@ -1,0 +1,9 @@
+export const ACCOUNT_TYPES = [
+  "CURRENT",
+  "SAVINGS",
+  "CREDIT_CARD",
+  "CASH",
+  "INVESTMENT",
+];
+
+export const MAX_ACCOUNT_BALANCE = 1000000000;
