@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { Account } from "../modules/account/account.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { Transaction } from "../modules/transaction/transaction.model.js";
 
 const sanitizeBody = (allowedFields = []) => {
   return (req, res, next) => {
@@ -54,4 +55,23 @@ const preventDefaultDeletion = (req, res, next) => {
   next();
 };
 
-export { sanitizeBody, resolveAccount, preventDefaultDeletion };
+const preventAccountDeletionWithTransactions = asyncHandler(
+  async (req, res, next) => {
+    const transactionExists = await Transaction.exists({
+      accountId: req.account._id,
+      userId: req.user._id,
+    });
+
+    if (transactionExists) {
+      throw new ApiError(
+        409,
+        "Cannot delete an account containing transactions"
+      );
+    }
+
+    next();
+  }
+);
+
+
+export { sanitizeBody, resolveAccount, preventDefaultDeletion,preventAccountDeletionWithTransactions };

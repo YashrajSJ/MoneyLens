@@ -63,6 +63,7 @@ router
     validate,
     resolveAccount,
     preventDefaultDeletion,
+    preventAccountDeletionWithTransactions,
     deleteAccount,
   );
 
