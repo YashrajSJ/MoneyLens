@@ -4,6 +4,7 @@ import { Account } from "../modules/account/account.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Transaction } from "../modules/transaction/transaction.model.js";
+import { Budget } from "../modules/budget/budget.model.js";
 
 const sanitizeBody = (allowedFields = []) => {
   return (req, res, next) => {
@@ -73,5 +74,23 @@ const preventAccountDeletionWithTransactions = asyncHandler(
   }
 );
 
+const preventAccountDeletionWithBudgets = asyncHandler(     // account containing budgets cannot be deleted hence this middleware is used in account deletion route
+  async (req, res, next) => {
+    const budgetExists = await Budget.exists({
+      accountId: req.account._id,
+      userId: req.user._id,
+    });
 
-export { sanitizeBody, resolveAccount, preventDefaultDeletion,preventAccountDeletionWithTransactions };
+    if (budgetExists) {
+      throw new ApiError(
+        409,
+        "Cannot delete an account containing budgets"
+      );
+    }
+
+    next();
+  }
+);
+
+
+export { sanitizeBody, resolveAccount, preventDefaultDeletion,preventAccountDeletionWithTransactions,preventAccountDeletionWithBudgets };

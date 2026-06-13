@@ -14,6 +14,8 @@ import { validate } from "../../middlewares/validator.middleware.js";
 
 import {
   preventDefaultDeletion,
+  preventAccountDeletionWithTransactions,
+  preventAccountDeletionWithBudgets,
   resolveAccount,
   sanitizeBody,
 } from "../../middlewares/account.middleware.js";
@@ -24,16 +26,11 @@ import {
   updateAccountValidator,
 } from "./account.validator.js";
 
+import { accountAllowedFields } from "./account.constants.js";
+
 const router = Router();
 
-const accountAllowedFields = [
-  "name",
-  "type",
-  "balance",
-  "isDefault",
-  "institutionName",
-  "color",
-];
+
 
 router.use(verifyJWT);
 
@@ -64,6 +61,7 @@ router
     resolveAccount,
     preventDefaultDeletion,
     preventAccountDeletionWithTransactions,
+    preventAccountDeletionWithBudgets,
     deleteAccount,
   );
 

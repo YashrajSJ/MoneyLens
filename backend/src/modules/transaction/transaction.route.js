@@ -25,22 +25,10 @@ import {
   updateTransactionValidator,
 } from "./transaction.validator.js";
 
+import {transactionAllowedFields} from "./transaction.constants.js";
+
 const router = Router();
 
-const transactionAllowedFields = [
-  "accountId",
-  "type",
-  "amount",
-  "description",
-  "category",
-  "date",
-  "paymentMethod",
-  "merchantName",
-  "receiptUrl",
-  "isRecurring",
-  "recurringInterval",
-  "status",
-];
 
 router.use(verifyJWT);
 

@@ -39,6 +39,21 @@ export const EXPENSE_CATEGORIES = [
   "other-expense",
 ];
 
+export const transactionAllowedFields = [
+  "accountId",
+  "type",
+  "amount",
+  "description",
+  "category",
+  "date",
+  "paymentMethod",
+  "merchantName",
+  "receiptUrl",
+  "isRecurring",
+  "recurringInterval",
+  "status",
+];
+
 export const ALL_CATEGORIES = [
   ...INCOME_CATEGORIES,
   ...EXPENSE_CATEGORIES,
