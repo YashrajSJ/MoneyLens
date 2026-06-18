@@ -98,4 +98,8 @@ transactionSchema.index({ userId: 1, accountId: 1, date: -1 });
 transactionSchema.index({ userId: 1, type: 1, category: 1 });
 transactionSchema.index({ isRecurring: 1, nextRecurringDate: 1 });
 
+transactionSchema.index({ description: "text",merchantName: "text"});
+
+transactionSchema.index({ userId: 1,status: 1, date: -1});
+
 export const Transaction = mongoose.model("Transaction", transactionSchema);

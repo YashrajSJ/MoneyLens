@@ -10,6 +10,7 @@ import authRouter from "../src/modules/auth/auth.routes.js";
 import accountRouter from "../src/modules/account/account.routes.js";
 import transactionRouter from "../src/modules/transaction/transaction.route.js";
 import budgetRouter from "../src/modules/budget/budget.routes.js";
+import analyticsRouter from "../src/modules/analytics/analytics.route.js";
 
 const app = express();
 app.use(helmet());
@@ -36,6 +37,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/account", accountRouter);
 app.use("/api/v1/transaction", transactionRouter);
 app.use("/api/v1/budgets", budgetRouter);
+app.use("/api/v1/analytics", analyticsRouter);
 app.use(errorHandler);
 
 export default app;

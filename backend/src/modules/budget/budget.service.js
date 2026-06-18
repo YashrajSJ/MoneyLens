@@ -17,11 +17,13 @@ const calculateBudgetProgress = async ({ userId, budget }) => {
     budget.year
   );
 
+  const accountId = budget.accountId._id || budget.accountId;
+
   const result = await Transaction.aggregate([
     {
       $match: {
         userId,
-        accountId: budget.accountId,
+        accountId,
         type: "EXPENSE",
         status: "COMPLETED",
         date: {

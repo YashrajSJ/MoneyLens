@@ -1,6 +1,6 @@
 import { Transaction } from "./transaction.model.js";
-import { ApiError } from "../utils/ApiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const sanitizeTransactionBody = (allowedFields = []) => {
   return (req, res, next) => {

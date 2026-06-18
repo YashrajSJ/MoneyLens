@@ -2,9 +2,8 @@ import { Account } from "../account/account.model.js";
 import { Transaction } from "./transaction.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { withTransaction } from "../../utils/withTransaction.js";
-import {
-  DEFAULT_PAGE_SIZE,
-} from "./transaction.constants.js";
+import {DEFAULT_PAGE_SIZE} from "./transaction.constants.js";
+import { MAX_ACCOUNT_BALANCE } from "../account/account.constants.js";
 
 const getBalanceEffect = (transaction) => {
   if (transaction.status !== "COMPLETED") return 0;
@@ -32,6 +31,10 @@ const ensureValidBalance = (account, balanceEffect) => {
 
   if (resultingBalance < 0) {
     throw new ApiError(400, "Insufficient account balance");
+  }
+
+  if (resultingBalance > MAX_ACCOUNT_BALANCE) {
+    throw new ApiError(400, `Account balance cannot exceed ${MAX_ACCOUNT_BALANCE}`);
   }
 
   return resultingBalance;
@@ -109,10 +112,7 @@ const getTransactionsService = async ({ userId, query }) => {
   }
 
   if (search) {
-    filter.$or = [
-      { description: { $regex: search, $options: "i" } },
-      { merchantName: { $regex: search, $options: "i" } },
-    ];
+    filter.$text = { $search: search };
   }
 
   const skip = (page - 1) * limit;

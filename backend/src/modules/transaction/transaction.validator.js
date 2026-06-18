@@ -85,6 +85,7 @@ const getTransactionsValidator = () => [
   query("to").optional().isISO8601().withMessage("Invalid to date"),
   query("page").optional().isInt({ min: 1 }).toInt(),
   query("limit").optional().isInt({ min: 1, max: MAX_PAGE_SIZE }).toInt(),
+  query("search").optional().trim().isLength({ min: 1, max: 100 }).withMessage("Search must be between 1 and 100 characters")
 ];
 
 const bulkDeleteValidator = () => [
@@ -95,6 +96,16 @@ const bulkDeleteValidator = () => [
   body("transactionIds.*")
     .isMongoId()
     .withMessage("Every transaction id must be valid"),
+  
+  body("transactionIds").custom((transactionIds) => {
+  const uniqueIds = new Set(transactionIds);
+
+  if (uniqueIds.size !== transactionIds.length) {
+    throw new Error("Transaction ids must be unique");
+  }
+
+  return true;
+}),
 ];
 
 export {
