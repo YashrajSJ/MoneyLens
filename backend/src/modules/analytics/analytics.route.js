@@ -11,6 +11,7 @@ import {
   getRecentTransactions,
   getSummary,
   getTopMerchants,
+  getBudgetProgress
 } from "./analytics.controller.js";
 
 import {
@@ -21,6 +22,7 @@ import {
   recentTransactionsValidator,
   summaryValidator,
   topMerchantsValidator,
+  budgetProgressValidator
 } from "./analytics.validator.js";
 
 const router = Router();
@@ -54,5 +56,9 @@ router
 router
   .route("/recent-transactions")
   .get(recentTransactionsValidator(), validate, getRecentTransactions);
+
+router
+  .route("/budget-progress")
+  .get(budgetProgressValidator(), validate, getBudgetProgress);
 
 export default router;

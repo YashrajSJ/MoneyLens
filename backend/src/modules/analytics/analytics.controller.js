@@ -9,6 +9,7 @@ import {
   getRecentTransactionsService,
   getSummaryService,
   getTopMerchantsService,
+  getBudgetProgressService,
 } from "./analytics.service.js";
 
 const getDashboardAnalytics = asyncHandler(async (req, res) => {
@@ -104,6 +105,21 @@ const getRecentTransactions = asyncHandler(async (req, res) => {
   );
 });
 
+const getBudgetProgress = asyncHandler(async (req, res) => {
+  const result = await getBudgetProgressService({
+    userId: req.user._id,
+    query: req.query,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      result,
+      "Budget progress fetched successfully"
+    )
+  );
+});
+
 export {
   getDashboardAnalytics,
   getSummary,
@@ -112,4 +128,5 @@ export {
   getTopMerchants,
   getAccountSummary,
   getRecentTransactions,
+  getBudgetProgress
 };

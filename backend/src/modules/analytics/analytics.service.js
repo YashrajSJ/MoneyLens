@@ -13,6 +13,9 @@ import {
   DEFAULT_TREND_MONTHS,
 } from "./analytics.constants.js";
 
+import { Budget } from "../budget/budget.model.js";
+import { BUDGET_STATUSES } from "../budget/budget.constants.js";
+
 const toObjectId = (id) => new mongoose.Types.ObjectId(String(id));
 
 const ensureOwnedAccount = async ({ userId, accountId }) => {
@@ -35,7 +38,15 @@ const getDateRange = ({ from, to }) => {
     ? new Date(from)
     : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
-  const endDate = to ? new Date(to) : now;
+  let endDate;
+
+  if (to) {
+    endDate = new Date(to);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
+    endDate.setUTCHours(0, 0, 0, 0);
+  } else {
+    endDate = now;
+  }
 
   return { startDate, endDate };
 };
@@ -53,7 +64,7 @@ const buildTransactionFilter = ({
     status: "COMPLETED",
     date: {
       $gte: startDate,
-      $lte: endDate,
+      $lt: endDate,
     },
   };
 
@@ -143,7 +154,15 @@ const getCategoryBreakdownService = async ({
     },
     {
       $group: {
-        _id: "$category",
+        _id: {
+                $cond: [
+                  {
+                    $or: [ { $eq: ["$category", null] }, { $eq: ["$category", ""] }, ]
+                  },
+                  "uncategorized",
+                  "$category",
+                ],
+              },
         totalSpent: {
           $sum: "$amount",
         },
@@ -177,6 +196,39 @@ const getCategoryBreakdownService = async ({
   return await Transaction.aggregate(pipeline);
 };
 
+const fillMissingMonths = ({ trends, months }) => {
+  const now = new Date();
+  const trendMap = new Map();
+
+  trends.forEach((trend) => {
+    trendMap.set(`${trend.year}-${trend.month}`, trend);
+  });
+
+  const result = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const date = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1)
+    );
+
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    const key = `${year}-${month}`;
+
+    result.push(
+      trendMap.get(key) || {
+        year,
+        month,
+        income: 0,
+        expenses: 0,
+        netSavings: 0,
+      }
+    );
+  }
+
+  return result;
+};
+
 const getMonthlyTrendService = async ({
   userId,
   query,
@@ -187,8 +239,7 @@ const getMonthlyTrendService = async ({
     accountId: query.accountId,
   });
 
-  const months = monthsOverride || query.months || DEFAULT_TREND_MONTHS;
-  const now = new Date();
+ const months = monthsOverride || Number(query.months) || DEFAULT_TREND_MONTHS;  const now = new Date();
 
   const startDate = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months + 1, 1)
@@ -199,7 +250,7 @@ const getMonthlyTrendService = async ({
     status: "COMPLETED",
     date: {
       $gte: startDate,
-      $lte: now,
+      $lt: now,
     },
   };
 
@@ -207,7 +258,7 @@ const getMonthlyTrendService = async ({
     filter.accountId = toObjectId(query.accountId);
   }
 
-  return await Transaction.aggregate([
+  const trends = await Transaction.aggregate([
     {
       $match: filter,
     },
@@ -254,6 +305,8 @@ const getMonthlyTrendService = async ({
       },
     },
   ]);
+
+  return fillMissingMonths({ trends, months });
 };
 
 const getTopMerchantsService = async ({ userId, query }) => {
@@ -275,7 +328,7 @@ const getTopMerchantsService = async ({ userId, query }) => {
     $ne: "",
   };
 
-  const limit = query.limit || DEFAULT_MERCHANT_LIMIT;
+  const limit = Number(query.limit) || DEFAULT_MERCHANT_LIMIT;
 
   return await Transaction.aggregate([
     {
@@ -374,20 +427,111 @@ const getRecentTransactionsService = async ({ userId, query }) => {
     accountId: query.accountId,
   });
 
-  const filter = {
+  const filter = buildTransactionFilter({
     userId,
-  };
+    accountId: query.accountId,
+    from: query.from,
+    to: query.to,
+  });
 
-  if (query.accountId) {
-    filter.accountId = query.accountId;
-  }
-
-  const limit = query.limit || DEFAULT_RECENT_TRANSACTION_LIMIT;
+const limit = Number(query.limit) || DEFAULT_RECENT_TRANSACTION_LIMIT;
 
   return await Transaction.find(filter)
     .populate("accountId", "name type color")
     .sort({ date: -1, createdAt: -1 })
     .limit(limit);
+};
+
+const getBudgetProgressService = async ({ userId, query }) => {
+  const now = new Date();
+
+  const month = Number(query.month) || now.getUTCMonth() + 1;
+  const year = Number(query.year) || now.getUTCFullYear();
+
+  let accountId = query.accountId;
+
+  if (accountId) {
+    await ensureOwnedAccount({ userId, accountId });
+  } else {
+    const defaultAccount = await Account.findOne({
+      userId,
+      isDefault: true,
+    });
+
+    if (!defaultAccount) {
+      return {
+        budget: null,
+        progress: null,
+      };
+    }
+
+    accountId = defaultAccount._id;
+  }
+
+  const budget = await Budget.findOne({
+    userId,
+    accountId,
+    month,
+    year,
+  });
+
+  if (!budget) {
+    return {
+      budget: null,
+      progress: null,
+    };
+  }
+
+  const startDate = new Date(Date.UTC(year, month - 1, 1));
+  const endDate = new Date(Date.UTC(year, month, 1));
+
+  const result = await Transaction.aggregate([
+    {
+      $match: {
+        userId: toObjectId(userId),
+        accountId: toObjectId(accountId),
+        type: "EXPENSE",
+        status: "COMPLETED",
+        date: {
+          $gte: startDate,
+          $lt: endDate,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        currentExpenses: {
+          $sum: "$amount",
+        },
+      },
+    },
+  ]);
+
+  const currentExpenses = result[0]?.currentExpenses || 0;
+  const remainingAmount = Math.max(budget.amount - currentExpenses, 0);
+
+  const percentageUsed =
+    budget.amount > 0 ? (currentExpenses / budget.amount) * 100 : 0;
+
+  let status = BUDGET_STATUSES.SAFE;
+
+  if (percentageUsed >= 100) {
+    status = BUDGET_STATUSES.EXCEEDED;
+  } else if (percentageUsed >= budget.alertThreshold) {
+    status = BUDGET_STATUSES.WARNING;
+  }
+
+  return {
+    budget,
+    progress: {
+      budgetAmount: budget.amount,
+      currentExpenses,
+      remainingAmount,
+      percentageUsed: Number(percentageUsed.toFixed(2)),
+      status,
+    },
+  };
 };
 
 const getDashboardAnalyticsService = async ({ userId, query }) => {
@@ -396,50 +540,51 @@ const getDashboardAnalyticsService = async ({ userId, query }) => {
   };
 
   const [
-    summary,
-    accounts,
-    categories,
-    trends,
-    recentTransactions,
-  ] = await Promise.all([
-    getSummaryService({
-      userId,
-      query: dashboardQuery,
-    }),
+  summary,
+  accounts,
+  categories,
+  trends,
+  recentTransactions,
+  budgetProgress,
+] = await Promise.all([
+  getSummaryService({ userId, query: dashboardQuery }),
 
-    getAccountSummaryService({
-      userId,
-      query: dashboardQuery,
-    }),
+  getAccountSummaryService({ userId, query: dashboardQuery }),
 
-    getCategoryBreakdownService({
-      userId,
-      query: dashboardQuery,
-      limit: DASHBOARD_CATEGORY_LIMIT,
-    }),
+  getCategoryBreakdownService({
+    userId,
+    query: dashboardQuery,
+    limit: DASHBOARD_CATEGORY_LIMIT,
+  }),
 
-    getMonthlyTrendService({
-      userId,
-      query: dashboardQuery,
-      monthsOverride: DASHBOARD_TREND_MONTHS,
-    }),
+  getMonthlyTrendService({
+    userId,
+    query: dashboardQuery,
+    monthsOverride: DASHBOARD_TREND_MONTHS,
+  }),
 
-    getRecentTransactionsService({
-      userId,
-      query: {
-        ...dashboardQuery,
-        limit: DASHBOARD_RECENT_TRANSACTION_LIMIT,
-      },
-    }),
-  ]);
+  getRecentTransactionsService({
+    userId,
+    query: {
+      ...dashboardQuery,
+      limit: DASHBOARD_RECENT_TRANSACTION_LIMIT,
+    },
+  }),
 
-  return {
-    summary,
-    accounts,
-    categories,
-    trends,
-    recentTransactions,
-  };
+  getBudgetProgressService({
+    userId,
+    query: dashboardQuery,
+  }),
+]);
+
+return {
+  summary,
+  accounts,
+  categories,
+  trends,
+  recentTransactions,
+  budgetProgress,
+};
 };
 
 export {
@@ -450,4 +595,5 @@ export {
   getTopMerchantsService,
   getAccountSummaryService,
   getRecentTransactionsService,
+  getBudgetProgressService,
 };
