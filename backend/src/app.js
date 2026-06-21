@@ -12,6 +12,8 @@ import transactionRouter from "../src/modules/transaction/transaction.route.js";
 import budgetRouter from "../src/modules/budget/budget.routes.js";
 import analyticsRouter from "../src/modules/analytics/analytics.route.js";
 
+import recurringRouter from "../src/modules/recurring/recurring.route.js";
+
 const app = express();
 app.use(helmet());
 app.disable("x-powered-by");
@@ -38,6 +40,7 @@ app.use("/api/v1/account", accountRouter);
 app.use("/api/v1/transaction", transactionRouter);
 app.use("/api/v1/budgets", budgetRouter);
 app.use("/api/v1/analytics", analyticsRouter);
+app.use("/api/v1/recurring", recurringRouter);
 app.use(errorHandler);
 
 export default app;

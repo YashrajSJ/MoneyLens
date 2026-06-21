@@ -62,3 +62,12 @@ export const ALL_CATEGORIES = [
 export const MAX_TRANSACTION_AMOUNT = 100000000;
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
+
+
+
+export const RECURRING_STATUS = {
+  ACTIVE: "ACTIVE",
+  PAUSED: "PAUSED",
+};
+
+export const RECURRING_STATUSES = Object.values(RECURRING_STATUS);

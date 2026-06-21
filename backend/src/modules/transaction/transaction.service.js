@@ -5,6 +5,8 @@ import { withTransaction } from "../../utils/withTransaction.js";
 import {DEFAULT_PAGE_SIZE} from "./transaction.constants.js";
 import { MAX_ACCOUNT_BALANCE } from "../account/account.constants.js";
 
+import { RECURRING_STATUS } from "./transaction.constants.js";
+
 const getBalanceEffect = (transaction) => {
   if (transaction.status !== "COMPLETED") return 0;
 
@@ -64,6 +66,9 @@ const createTransactionService = async ({ userId, payload }) => {
           : undefined,
         nextRecurringDate: payload.isRecurring
           ? calculateNextRecurringDate(payload.date, payload.recurringInterval)
+          : undefined,
+        recurringStatus: payload.isRecurring
+          ? RECURRING_STATUS.ACTIVE
           : undefined,
       };
 
@@ -195,6 +200,10 @@ const updateTransactionService = async ({
       });
 
       if (transaction.isRecurring && transaction.recurringInterval) {
+
+         transaction.recurringStatus =
+         transaction.recurringStatus || RECURRING_STATUS.ACTIVE;
+
         transaction.nextRecurringDate = calculateNextRecurringDate(
           transaction.date,
           transaction.recurringInterval
@@ -202,7 +211,15 @@ const updateTransactionService = async ({
       } else {
         transaction.recurringInterval = undefined;
         transaction.nextRecurringDate = undefined;
+
+          transaction.recurringStatus = undefined;
+          transaction.lastProcessedAt = undefined;
+
       }
+
+      if (transaction.isRecurring && !transaction.recurringInterval) {
+      throw new ApiError(400, "Recurring interval is required");
+}
 
       await transaction.save({ session });
 

@@ -7,6 +7,7 @@ import {
   RECURRING_INTERVALS,
   TRANSACTION_STATUSES,
   TRANSACTION_TYPES,
+  RECURRING_STATUSES,
 } from "./transaction.constants.js";
 
 const transactionSchema = new Schema(
@@ -82,6 +83,21 @@ const transactionSchema = new Schema(
 
     nextRecurringDate: Date,
 
+    recurringStatus: {
+      type: String,
+      enum: RECURRING_STATUSES,
+      default: function () {
+        return this.isRecurring ? "ACTIVE" : undefined;
+      },
+    },
+
+    lastProcessedAt: Date,
+
+    recurringParentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Transaction",
+    },
+
     status: {
       type: String,
       enum: TRANSACTION_STATUSES,
@@ -90,7 +106,7 @@ const transactionSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 transactionSchema.index({ userId: 1, date: -1 });
@@ -98,8 +114,13 @@ transactionSchema.index({ userId: 1, accountId: 1, date: -1 });
 transactionSchema.index({ userId: 1, type: 1, category: 1 });
 transactionSchema.index({ isRecurring: 1, nextRecurringDate: 1 });
 
-transactionSchema.index({ description: "text",merchantName: "text"});
+transactionSchema.index({ description: "text", merchantName: "text" });
 
-transactionSchema.index({ userId: 1,status: 1, date: -1});
+transactionSchema.index({ userId: 1, status: 1, date: -1 });
+
+
+transactionSchema.index({userId: 1,isRecurring: 1, recurringStatus: 1,nextRecurringDate: 1,});
+
+transactionSchema.index({ recurringParentId: 1,date: -1,});
 
 export const Transaction = mongoose.model("Transaction", transactionSchema);

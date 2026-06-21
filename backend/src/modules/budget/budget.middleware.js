@@ -5,15 +5,15 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 const sanitizeBudgetBody = (allowedFields = []) => {
   return (req, res, next) => {
     const sanitizedBody = {};
+    const body = req.body || {};
 
     allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        sanitizedBody[field] = req.body[field];
+      if (body[field] !== undefined) {
+        sanitizedBody[field] = body[field];
       }
     });
 
     req.body = sanitizedBody;
-
     next();
   };
 };
