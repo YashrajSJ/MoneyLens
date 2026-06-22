@@ -6,6 +6,10 @@ const requiredEnvVars = [
   "REFRESH_TOKEN_SECRET",
   "ACCESS_TOKEN_EXPIRY",
   "REFRESH_TOKEN_EXPIRY",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+  "AI_API_KEY",
 ];
 
 export const validateEnv = () => {
