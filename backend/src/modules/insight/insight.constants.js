@@ -1,0 +1,15 @@
+export const INSIGHT_TYPES = [
+  "SPENDING_ALERT",
+  "BUDGET_WARNING",
+  "SAVING_OPPORTUNITY",
+  "CATEGORY_TREND",
+  "GENERAL_TIP",
+];
+
+export const INSIGHT_SEVERITIES = ["LOW", "MEDIUM", "HIGH"];
+
+export const DEFAULT_INSIGHT_PAGE_SIZE = 20;
+export const MAX_INSIGHT_PAGE_SIZE = 50;
+
+export const AI_INSIGHT_LIMIT = 5;
+export const AI_INSIGHT_COOLDOWN_MINUTES = 10;

@@ -1,11 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { v2 as cloudinary } from "cloudinary";
+import { cloudinary } from "../../config/cloudinary.js";
 
 import { Account } from "../account/account.model.js";
-import {
-  ALL_CATEGORIES,
-  PAYMENT_METHODS,
-} from "../transaction/transaction.constants.js";
+import {ALL_CATEGORIES, PAYMENT_METHODS } from "../transaction/transaction.constants.js";
 
 import { Receipt } from "./receipt.model.js";
 import { ApiError } from "../../utils/ApiError.js";
@@ -17,11 +14,7 @@ import {
   RECEIPT_STATUSES,
 } from "./receipt.constants.js";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+
 
 const uploadReceiptToCloudinary = async (file) => {
   const base64 = file.buffer.toString("base64");

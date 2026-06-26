@@ -13,6 +13,7 @@ import budgetRouter from "../src/modules/budget/budget.routes.js";
 import analyticsRouter from "../src/modules/analytics/analytics.route.js";
 import recurringRouter from "../src/modules/recurring/recurring.route.js";
 import receiptRouter from "../src/modules/receipt/receipt.route.js";
+import insightRouter from "../src/modules/insight/insight.route.js";
 
 const app = express();
 app.use(helmet());
@@ -42,6 +43,7 @@ app.use("/api/v1/budgets", budgetRouter);
 app.use("/api/v1/analytics", analyticsRouter);
 app.use("/api/v1/recurring", recurringRouter);
 app.use("/api/v1/receipts", receiptRouter);
+app.use("/api/v1/insights", insightRouter);
 app.use(errorHandler);
 
 export default app;
