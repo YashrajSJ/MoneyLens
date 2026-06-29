@@ -1,8 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
 import { cloudinary } from "../../config/cloudinary.js";
 
 import { Account } from "../account/account.model.js";
-import {ALL_CATEGORIES, PAYMENT_METHODS } from "../transaction/transaction.constants.js";
+import {
+  ALL_CATEGORIES,
+  PAYMENT_METHODS,
+} from "../transaction/transaction.constants.js";
+import { enqueueReceiptParsingJob } from "../jobs/job.producer.js";
 
 import { Receipt } from "./receipt.model.js";
 import { ApiError } from "../../utils/ApiError.js";
@@ -13,8 +18,6 @@ import {
   DEFAULT_RECEIPT_PAGE_SIZE,
   RECEIPT_STATUSES,
 } from "./receipt.constants.js";
-
-
 
 const uploadReceiptToCloudinary = async (file) => {
   const base64 = file.buffer.toString("base64");
@@ -96,10 +99,18 @@ const validateExtractedReceiptData = (data) => {
   }
 };
 
-const extractReceiptDataWithAI = async (file) => {
+const extractReceiptDataWithAI = async ({ imageUrl, mimeType }) => {
   if (!process.env.AI_API_KEY) {
     throw new ApiError(500, "AI API key is not configured");
   }
+
+  const imageResponse = await fetch(imageUrl);
+
+  if (!imageResponse.ok) {
+    throw new ApiError(502, "Failed to download receipt image for parsing");
+  }
+
+  const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
   const genAI = new GoogleGenerativeAI(process.env.AI_API_KEY);
   const model = genAI.getGenerativeModel({
@@ -124,17 +135,18 @@ Schema:
 }
 
 Rules:
-- If a field is unclear, use a reasonable null-safe value.
+- If it is not a valid receipt, return {}.
 - amount must be the final total paid.
 - type should usually be EXPENSE for receipts.
+- Use only allowed category and payment method values.
 `;
 
   const result = await model.generateContent([
     prompt,
     {
       inlineData: {
-        data: file.buffer.toString("base64"),
-        mimeType: file.mimetype,
+        data: imageBuffer.toString("base64"),
+        mimeType,
       },
     },
   ]);
@@ -170,17 +182,16 @@ const scanReceiptService = async ({ userId, file }) => {
   if (!file) {
     throw new ApiError(
       400,
-      "Receipt image is required. Use form-data field name 'receipt'."
+      "Receipt image is required. Use form-data field name 'receipt'.",
     );
   }
 
   let uploadedImage;
-  let receipt;
 
   try {
     uploadedImage = await uploadReceiptToCloudinary(file);
 
-    receipt = await Receipt.create({
+    const receipt = await Receipt.create({
       userId,
       imageUrl: uploadedImage.secure_url,
       publicId: uploadedImage.public_id,
@@ -188,51 +199,180 @@ const scanReceiptService = async ({ userId, file }) => {
       mimeType: file.mimetype,
       size: file.size,
       status: RECEIPT_STATUSES.PROCESSING,
+      processingStartedAt: new Date(),
     });
-  } catch (error) {
-    if (uploadedImage?.public_id) {
-      await cloudinary.uploader.destroy(uploadedImage.public_id).catch(() => {});
-    }
 
-    throw error;
-  }
+    const job = await enqueueReceiptParsingJob({
+      userId,
+      receiptId: receipt._id,
+    });
 
-  try {
-    const extracted = await extractReceiptDataWithAI(file);
-
-    receipt.status = RECEIPT_STATUSES.PARSED;
-    receipt.extractedData = extracted.normalized;
-    receipt.rawAiResponse = extracted.raw;
-    receipt.errorMessage = undefined;
-
+    receipt.parsingJobId = job.id;
     await receipt.save();
 
     logger.info(
       {
         userId,
         receiptId: receipt._id,
+        jobId: job.id,
       },
-      "Receipt parsed successfully"
+      "Receipt uploaded and parsing job queued",
     );
 
-    return receipt;
+    return {
+      receipt,
+      job: {
+        jobId: job.id,
+        queueName: job.queueName,
+      },
+    };
   } catch (error) {
-    receipt.status = RECEIPT_STATUSES.FAILED;
-    receipt.errorMessage = error.message;
+    if (uploadedImage?.public_id) {
+      await cloudinary.uploader
+        .destroy(uploadedImage.public_id)
+        .catch(() => {});
+    }
 
-    await receipt.save();
-
-    logger.error(
-      {
-        err: error,
-        userId,
-        receiptId: receipt._id,
-      },
-      "Receipt parsing failed"
-    );
-
-    return receipt;
+    throw error;
   }
+};
+
+const processReceiptParsingJobService = async ({
+  userId,
+  receiptId,
+  jobId,
+}) => {
+  const receipt = await Receipt.findOne({
+    _id: receiptId,
+    userId,
+  });
+
+  if (!receipt) {
+    throw new ApiError(404, "Receipt not found");
+  }
+
+  if (receipt.status === RECEIPT_STATUSES.PARSED) {
+    return {
+      receiptId: receipt._id,
+      status: receipt.status,
+      alreadyParsed: true,
+    };
+  }
+
+  if (receipt.status !== RECEIPT_STATUSES.PROCESSING) {
+    throw new ApiError(409, "Receipt is not in processing state");
+  }
+
+  const extracted = await extractReceiptDataWithAI({
+    imageUrl: receipt.imageUrl,
+    mimeType: receipt.mimeType,
+  });
+
+  receipt.status = RECEIPT_STATUSES.PARSED;
+  receipt.extractedData = extracted.normalized;
+  receipt.rawAiResponse = extracted.raw;
+  receipt.errorMessage = undefined;
+  receipt.parsedAt = new Date();
+  receipt.parsingJobId = jobId;
+
+  await receipt.save();
+
+  logger.info(
+    {
+      userId,
+      receiptId: receipt._id,
+      jobId,
+    },
+    "Receipt parsed successfully",
+  );
+
+  return {
+    receiptId: receipt._id,
+    status: receipt.status,
+  };
+};
+
+const markReceiptParsingFailedService = async ({
+  userId,
+  receiptId,
+  jobId,
+  error,
+}) => {
+  const receipt = await Receipt.findOne({
+    _id: receiptId,
+    userId,
+  });
+
+  if (!receipt) {
+    return;
+  }
+
+  if (receipt.status === RECEIPT_STATUSES.PARSED) {
+    return;
+  }
+
+  receipt.status = RECEIPT_STATUSES.FAILED;
+  receipt.errorMessage = error.message;
+  receipt.parsingJobId = jobId;
+
+  await receipt.save();
+
+  logger.error(
+    {
+      err: error,
+      userId,
+      receiptId,
+      jobId,
+    },
+    "Receipt parsing failed after final attempt",
+  );
+};
+
+const retryReceiptParsingService = async ({ userId, receipt }) => {
+  if (String(receipt.userId) !== String(userId)) {
+    throw new ApiError(403, "You are not allowed to access this receipt");
+  }
+
+  if (receipt.status === RECEIPT_STATUSES.PROCESSING) {
+    throw new ApiError(409, "Receipt parsing is already in progress");
+  }
+
+  if (receipt.status === RECEIPT_STATUSES.PARSED) {
+    throw new ApiError(409, "Receipt is already parsed");
+  }
+
+  const updatedReceipt = await Receipt.findOneAndUpdate(
+    {
+      _id: receipt._id,
+      userId,
+    },
+    {
+      $set: {
+        status: RECEIPT_STATUSES.PROCESSING,
+        errorMessage: undefined,
+        processingStartedAt: new Date(),
+      },
+    },
+    {
+      new: true,
+    },
+  );
+
+  const job = await enqueueReceiptParsingJob({
+    userId,
+    receiptId: updatedReceipt._id,
+  });
+
+  updatedReceipt.parsingJobId = job.id;
+  await updatedReceipt.save();
+
+  return {
+    receipt: updatedReceipt,
+    job: {
+      jobId: job.id,
+      queueName: job.queueName,
+    },
+  };
 };
 
 const getReceiptsService = async ({ userId, query }) => {
@@ -249,11 +389,7 @@ const getReceiptsService = async ({ userId, query }) => {
   }
 
   const [receipts, total] = await Promise.all([
-    Receipt.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+    Receipt.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
 
     Receipt.countDocuments(filter),
   ]);
@@ -316,6 +452,13 @@ const prepareTransactionFromReceiptService = async ({
 };
 
 const deleteReceiptService = async ({ userId, receipt }) => {
+  if (receipt.status === RECEIPT_STATUSES.PROCESSING) {
+    throw new ApiError(
+      409,
+      "Cannot delete receipt while parsing is in progress",
+    );
+  }
+
   try {
     await cloudinary.uploader.destroy(receipt.publicId);
   } catch (error) {
@@ -326,18 +469,25 @@ const deleteReceiptService = async ({ userId, receipt }) => {
         receiptId: receipt._id,
         publicId: receipt.publicId,
       },
-      "Cloudinary receipt delete failed"
+      "Cloudinary receipt delete failed",
     );
   }
 
-  await Receipt.deleteOne({
+  const result = await Receipt.deleteOne({
     _id: receipt._id,
     userId,
   });
+
+  if (result.deletedCount === 0) {
+    throw new ApiError(404, "Receipt not found");
+  }
 };
 
 export {
   scanReceiptService,
+  processReceiptParsingJobService,
+  markReceiptParsingFailedService,
+  retryReceiptParsingService,
   getReceiptsService,
   getReceiptByIdService,
   prepareTransactionFromReceiptService,

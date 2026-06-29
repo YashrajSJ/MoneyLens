@@ -10,6 +10,8 @@ const requiredEnvVars = [
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
   "AI_API_KEY",
+  "REDIS_URL",
+  "ENABLE_WORKERS",
 ];
 
 export const validateEnv = () => {
