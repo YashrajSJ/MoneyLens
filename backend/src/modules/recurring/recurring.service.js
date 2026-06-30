@@ -10,7 +10,11 @@ import { ApiError } from "../../utils/ApiError.js";
 import { logger } from "../../utils/logger.js";
 import { withTransaction } from "../../utils/withTransaction.js";
 
-import { DEFAULT_RECURRING_PROCESS_LIMIT , DEFAULT_RECURRING_LIST_LIMIT } from "./recurring.constants.js";
+import {
+  DEFAULT_RECURRING_PROCESS_LIMIT,
+  DEFAULT_RECURRING_LIST_LIMIT,
+  MAX_RECURRING_BATCHES_PER_JOB,
+} from "./recurring.constants.js";
 
 const calculateNextRecurringDate = (date, interval) => {
   const nextDate = new Date(date);
@@ -88,7 +92,6 @@ const getRecurringTransactionsService = async ({ userId, query }) => {
 };
 
 const getDueRecurringTransactionsService = async ({ userId, query }) => {
-
   const asOf = query.asOf ? new Date(query.asOf) : new Date();
 
   if (Number.isNaN(asOf.getTime())) {
@@ -97,14 +100,22 @@ const getDueRecurringTransactionsService = async ({ userId, query }) => {
 
   const limit = Number(query.limit) || DEFAULT_RECURRING_PROCESS_LIMIT;
 
-  return await Transaction.find({
+  const filter = {
     userId,
     isRecurring: true,
     recurringStatus: RECURRING_STATUS.ACTIVE,
     nextRecurringDate: {
       $lte: asOf,
     },
-  })
+  };
+
+  if (query.excludeTransactionIds?.length) {
+    filter._id = {
+      $nin: query.excludeTransactionIds,
+    };
+  }
+
+  return await Transaction.find(filter)
     .populate("accountId", "name type color balance")
     .sort({ nextRecurringDate: 1 })
     .limit(limit)
@@ -242,52 +253,96 @@ const processDueRecurringTransactionsService = async ({
   query,
   jobId = randomUUID(),
 }) => {
-  const dueTransactions = await getDueRecurringTransactionsService({
-    userId,
-    query,
-  });
+  const asOf = query.asOf ? new Date(query.asOf) : new Date();
+
+  if (Number.isNaN(asOf.getTime())) {
+    throw new ApiError(400, "Invalid asOf date");
+  }
+
+  const limit = Number(query.limit) || DEFAULT_RECURRING_PROCESS_LIMIT;
 
   const processed = [];
   const failed = [];
+  const excludedTransactionIds = [];
 
-  const asOf = query.asOf || new Date();
+  let batchCount = 0;
+  let hasMore = true;
 
-  for (const transaction of dueTransactions) {
-    try {
-      const result = await processRecurringTransactionService({
-        userId,
-        transactionId: transaction._id,
+  while (hasMore && batchCount < MAX_RECURRING_BATCHES_PER_JOB) {
+    batchCount += 1;
+
+    const dueTransactions = await getDueRecurringTransactionsService({
+      userId,
+      query: {
         asOf,
-        jobId,
-      });
+        limit,
+        excludeTransactionIds: excludedTransactionIds,
+      },
+    });
 
-      processed.push({
-        recurringTransactionId: transaction._id,
-        generatedTransactionId: result.generatedTransaction._id,
-        status: result.generatedTransaction.status,
-      });
-    } catch (error) {
-      logger.error(
-        {
-          err: error,
-          jobId,
-          userId,
-          recurringTransactionId: transaction._id,
-        },
-        "Recurring transaction processing failed",
-      );
-
-      failed.push({
-        recurringTransactionId: transaction._id,
-        message: error.message,
-      });
+    if (dueTransactions.length === 0) {
+      hasMore = false;
+      break;
     }
+
+    for (const transaction of dueTransactions) {
+      try {
+        const result = await processRecurringTransactionService({
+          userId,
+          transactionId: transaction._id,
+          asOf,
+          jobId,
+        });
+
+        processed.push({
+          recurringTransactionId: transaction._id,
+          generatedTransactionId: result.generatedTransaction._id,
+          status: result.generatedTransaction.status,
+        });
+      } catch (error) {
+        logger.error(
+          {
+            err: error,
+            jobId,
+            userId,
+            recurringTransactionId: transaction._id,
+          },
+          "Recurring transaction processing failed",
+        );
+
+        excludedTransactionIds.push(transaction._id);
+
+        failed.push({
+          recurringTransactionId: transaction._id,
+          message: error.message,
+        });
+      }
+    }
+
+    hasMore = dueTransactions.length === limit;
   }
+
+  const remainingDueCount = await Transaction.countDocuments({
+    userId,
+    isRecurring: true,
+    recurringStatus: RECURRING_STATUS.ACTIVE,
+    nextRecurringDate: {
+      $lte: asOf,
+    },
+    _id: {
+      $nin: excludedTransactionIds,
+    },
+  });
 
   return {
     jobId,
+    batchSize: limit,
+    batchesProcessed: batchCount,
+    maxBatchesPerJob: MAX_RECURRING_BATCHES_PER_JOB,
     processedCount: processed.length,
     failedCount: failed.length,
+    remainingDueCount,
+    hasMore: remainingDueCount > 0,
     processed,
     failed,
   };
@@ -333,8 +388,6 @@ const pauseRecurringTransactionService = async ({ userId, transactionId }) => {
 };
 
 const resumeRecurringTransactionService = async ({ userId, transactionId }) => {
-
-
   const transaction = await Transaction.findOne({
     _id: transactionId,
     userId,
@@ -346,7 +399,7 @@ const resumeRecurringTransactionService = async ({ userId, transactionId }) => {
   }
 
   if (transaction.recurringStatus === RECURRING_STATUS.ACTIVE) {
-  throw new ApiError(409, "Recurring transaction is already active");
+    throw new ApiError(409, "Recurring transaction is already active");
   }
 
   if (!transaction.recurringInterval) {

@@ -9,6 +9,7 @@ import {
   getReceipts,
   scanReceipt,
   prepareTransactionFromReceipt,
+  retryReceiptParsing,
 } from "./receipt.controller.js";
 
 import { resolveReceipt, uploadReceipt } from "./receipt.middleware.js";
@@ -28,12 +29,16 @@ router.route("/scan").post(uploadReceipt, scanReceipt);
 router.route("/").get(getReceiptsValidator(), validate, getReceipts);
 
 router
+  .route("/:receiptId/retry-parsing")
+  .post(receiptIdValidator(), validate, resolveReceipt, retryReceiptParsing);
+
+router
   .route("/:receiptId/prepare-transaction")
   .post(
     prepareTransactionValidator(),
     validate,
     resolveReceipt,
-    prepareTransactionFromReceipt
+    prepareTransactionFromReceipt,
   );
 
 router

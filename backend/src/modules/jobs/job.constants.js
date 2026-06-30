@@ -1,11 +1,13 @@
 export const QUEUE_NAMES = {
   RECURRING: "recurring-jobs",
   INSIGHT: "insight-jobs",
+  RECEIPT: "receipt-jobs",
 };
 
 export const JOB_NAMES = {
   PROCESS_DUE_RECURRING: "process-due-recurring",
   GENERATE_INSIGHTS: "generate-insights",
+  PARSE_RECEIPT: "parse-receipt",
 };
 
 export const JOB_STATUSES = [

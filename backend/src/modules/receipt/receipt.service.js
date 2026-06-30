@@ -187,11 +187,13 @@ const scanReceiptService = async ({ userId, file }) => {
   }
 
   let uploadedImage;
+  let receipt;
+  let job;
 
   try {
     uploadedImage = await uploadReceiptToCloudinary(file);
 
-    const receipt = await Receipt.create({
+    receipt = await Receipt.create({
       userId,
       imageUrl: uploadedImage.secure_url,
       publicId: uploadedImage.public_id,
@@ -202,7 +204,7 @@ const scanReceiptService = async ({ userId, file }) => {
       processingStartedAt: new Date(),
     });
 
-    const job = await enqueueReceiptParsingJob({
+    job = await enqueueReceiptParsingJob({
       userId,
       receiptId: receipt._id,
     });
@@ -227,6 +229,14 @@ const scanReceiptService = async ({ userId, file }) => {
       },
     };
   } catch (error) {
+    if (job?.id) {
+      await job.remove().catch(() => {});
+    }
+
+    if (receipt?._id) {
+      await Receipt.deleteOne({ _id: receipt._id }).catch(() => {});
+    }
+
     if (uploadedImage?.public_id) {
       await cloudinary.uploader
         .destroy(uploadedImage.public_id)
@@ -352,27 +362,52 @@ const retryReceiptParsingService = async ({ userId, receipt }) => {
         errorMessage: undefined,
         processingStartedAt: new Date(),
       },
+      $unset: {
+        parsingJobId: "",
+      },
     },
     {
       new: true,
     },
   );
 
-  const job = await enqueueReceiptParsingJob({
-    userId,
-    receiptId: updatedReceipt._id,
-  });
+  if (!updatedReceipt) {
+    throw new ApiError(404, "Receipt not found");
+  }
 
-  updatedReceipt.parsingJobId = job.id;
-  await updatedReceipt.save();
+  try {
+    const job = await enqueueReceiptParsingJob({
+      userId,
+      receiptId: updatedReceipt._id,
+      source: "RETRY",
+    });
 
-  return {
-    receipt: updatedReceipt,
-    job: {
-      jobId: job.id,
-      queueName: job.queueName,
-    },
-  };
+    updatedReceipt.parsingJobId = job.id;
+    await updatedReceipt.save();
+
+    return {
+      receipt: updatedReceipt,
+      job: {
+        jobId: job.id,
+        queueName: job.queueName,
+      },
+    };
+  } catch (error) {
+    await Receipt.findOneAndUpdate(
+      {
+        _id: updatedReceipt._id,
+        userId,
+      },
+      {
+        $set: {
+          status: RECEIPT_STATUSES.FAILED,
+          errorMessage: error.message,
+        },
+      },
+    );
+
+    throw error;
+  }
 };
 
 const getReceiptsService = async ({ userId, query }) => {
@@ -457,6 +492,10 @@ const deleteReceiptService = async ({ userId, receipt }) => {
       409,
       "Cannot delete receipt while parsing is in progress",
     );
+  }
+
+  if (receipt.transactionId) {
+    throw new ApiError(409, "Cannot delete receipt linked to a transaction");
   }
 
   try {

@@ -4,7 +4,7 @@ import {
   RECURRING_SCHEDULER_PATTERNS,
 } from "./job.constants.js";
 
-import { insightQueue, recurringQueue } from "./job.queue.js";
+import { insightQueue, recurringQueue, receiptQueue } from "./job.queue.js";
 
 const enqueueRecurringProcessingJob = async ({ userId, asOf, limit }) => {
   const safeAsOf = asOf ?? new Date().toISOString();
@@ -19,7 +19,7 @@ const enqueueRecurringProcessingJob = async ({ userId, asOf, limit }) => {
     },
     {
       jobId: `recurring:${userId}:${safeAsOf}`,
-    }
+    },
   );
 };
 
@@ -33,6 +33,29 @@ const enqueueInsightGenerationJob = async ({ userId, month, year }) => {
     },
     {
       jobId: `insights:${userId}:${year}:${month}`,
+    },
+  );
+};
+
+const enqueueReceiptParsingJob = async ({
+  userId,
+  receiptId,
+  source = "INITIAL",
+}) => {
+  const timestamp = Date.now();
+
+  return await receiptQueue.add(
+    JOB_NAMES.PARSE_RECEIPT,
+    {
+      userId: String(userId),
+      receiptId: String(receiptId),
+      source,
+    },
+    {
+      jobId:
+        source === "RETRY"
+          ? `receipt-parse:${receiptId}:retry:${timestamp}`
+          : `receipt-parse:${receiptId}`,
     }
   );
 };
@@ -62,12 +85,13 @@ const upsertUserRecurringScheduler = async ({
           delay: 5000,
         },
       },
-    }
+    },
   );
 };
 
 export {
   enqueueRecurringProcessingJob,
   enqueueInsightGenerationJob,
+  enqueueReceiptParsingJob,
   upsertUserRecurringScheduler,
 };

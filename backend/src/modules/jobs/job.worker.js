@@ -5,6 +5,10 @@ import { logger } from "../../utils/logger.js";
 
 import { generateInsightsService } from "../insight/insight.service.js";
 import { processDueRecurringTransactionsService } from "../recurring/recurring.service.js";
+import {
+  markReceiptParsingFailedService,
+  processReceiptParsingJobService,
+} from "../receipt/receipt.service.js";
 
 import { JOB_NAMES, QUEUE_NAMES } from "./job.constants.js";
 
@@ -31,7 +35,7 @@ const startJobWorkers = () => {
           userId,
           action: job.name,
         },
-        "Recurring job started"
+        "Recurring job started",
       );
 
       return await processDueRecurringTransactionsService({
@@ -46,7 +50,7 @@ const startJobWorkers = () => {
     {
       connection: redisConnection,
       concurrency: 1,
-    }
+    },
   );
 
   const insightWorker = new Worker(
@@ -66,7 +70,7 @@ const startJobWorkers = () => {
           month,
           year,
         },
-        "Insight job started"
+        "Insight job started",
       );
 
       return await generateInsightsService({
@@ -80,10 +84,74 @@ const startJobWorkers = () => {
     {
       connection: redisConnection,
       concurrency: 2,
-    }
+    },
   );
 
-  workers = [recurringWorker, insightWorker];
+  const receiptWorker = new Worker(
+    QUEUE_NAMES.RECEIPT,
+    async (job) => {
+      if (job.name !== JOB_NAMES.PARSE_RECEIPT) {
+        throw new Error(`Unknown receipt job: ${job.name}`);
+      }
+
+      const { userId, receiptId } = job.data;
+
+      logger.info(
+        {
+          jobId: job.id,
+          userId,
+          receiptId,
+          action: job.name,
+        },
+        "Receipt parsing job started",
+      );
+
+      try {
+        return await processReceiptParsingJobService({
+          userId,
+          receiptId,
+          jobId: job.id,
+        });
+      } catch (error) {
+        if (error.statusCode === 422) {
+          await markReceiptParsingFailedService({
+            userId,
+            receiptId,
+            jobId: job.id,
+            error,
+          });
+
+          return {
+            receiptId,
+            status: "FAILED",
+            reason: error.message,
+            permanentFailure: true,
+          };
+        }
+
+        const maxAttempts = job.opts.attempts || 1;
+        const currentAttempt = job.attemptsMade + 1;
+        const isFinalAttempt = currentAttempt >= maxAttempts;
+
+        if (isFinalAttempt) {
+          await markReceiptParsingFailedService({
+            userId,
+            receiptId,
+            jobId: job.id,
+            error,
+          });
+        }
+
+        throw error;
+      }
+    },
+    {
+      connection: redisConnection,
+      concurrency: 2,
+    },
+  );
+
+  workers = [recurringWorker, insightWorker, receiptWorker];
 
   workers.forEach((worker) => {
     worker.on("completed", (job) => {
@@ -92,7 +160,7 @@ const startJobWorkers = () => {
           jobId: job.id,
           queueName: job.queueName,
         },
-        "Job completed"
+        "Job completed",
       );
     });
 
@@ -103,7 +171,7 @@ const startJobWorkers = () => {
           jobId: job?.id,
           queueName: job?.queueName,
         },
-        "Job failed"
+        "Job failed",
       );
     });
   });

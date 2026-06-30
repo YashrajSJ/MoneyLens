@@ -8,22 +8,24 @@ import {
   getReceiptsService,
   scanReceiptService,
   prepareTransactionFromReceiptService,
+  retryReceiptParsingService
 } from "./receipt.service.js";
 
 const scanReceipt = asyncHandler(async (req, res) => {
-  const receipt = await scanReceiptService({
+  const result = await scanReceiptService({
     userId: req.user._id,
     file: req.file,
   });
 
-  const message =
-  receipt.status === "FAILED"
-    ? "Receipt uploaded, but parsing failed"
-    : "Receipt scanned successfully";
-
-return res
-  .status(201)
-  .json(new ApiResponse(201, { receipt }, message));
+  return res
+    .status(202)
+    .json(
+      new ApiResponse(
+        202,
+        result,
+        "Receipt uploaded and parsing job queued successfully"
+      )
+    );
 });
 
 const getReceipts = asyncHandler(async (req, res) => {
@@ -45,6 +47,17 @@ const getReceiptById = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, { receipt }, "Receipt fetched successfully"));
+});
+
+const retryReceiptParsing = asyncHandler(async (req, res) => {
+  const result = await retryReceiptParsingService({
+    userId: req.user._id,
+    receipt: req.receipt,
+  });
+
+  return res
+    .status(202)
+    .json(new ApiResponse(202, result, "Receipt parsing job queued again"));
 });
 
 const deleteReceipt = asyncHandler(async (req, res) => {
@@ -82,4 +95,4 @@ const prepareTransactionFromReceipt = asyncHandler(async (req, res) => {
   );
 });
 
-export { scanReceipt, getReceipts, getReceiptById, deleteReceipt, prepareTransactionFromReceipt };
+export { scanReceipt, getReceipts, getReceiptById, deleteReceipt, prepareTransactionFromReceipt , retryReceiptParsing};

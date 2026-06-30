@@ -16,6 +16,19 @@ const receiptSchema = new Schema(
       ref: "Transaction",
     },
 
+    parsingJobId: {
+      type: String,
+      trim: true,
+    },
+
+    processingStartedAt: {
+      type: Date,
+    },
+
+    parsedAt: {
+      type: Date,
+    },
+
     imageUrl: {
       type: String,
       required: true,
@@ -69,7 +82,6 @@ const receiptSchema = new Schema(
     errorMessage: {
       type: String,
     },
-
   },
   {
     timestamps: true,
@@ -79,5 +91,6 @@ const receiptSchema = new Schema(
 receiptSchema.index({ userId: 1, createdAt: -1 });
 receiptSchema.index({ userId: 1, status: 1, createdAt: -1 });
 receiptSchema.index({ userId: 1, transactionId: 1 });
+receiptSchema.index({ parsingJobId: 1 });
 
 export const Receipt = mongoose.model("Receipt", receiptSchema);

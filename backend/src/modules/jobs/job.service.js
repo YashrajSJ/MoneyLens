@@ -18,6 +18,7 @@ const buildSafeJobData = (data = {}) => {
     asOf: data.asOf,
     limit: data.limit,
     source: data.source,
+    receiptId: data.receiptId,
   };
 };
 
