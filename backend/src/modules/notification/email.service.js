@@ -38,6 +38,9 @@ const queueEmailDeliveryService = async ({
       dedupeKey,
     });
 
+    emailLog.jobId = job.id;
+    await emailLog.save();
+
     return {
       emailLogId: emailLog._id,
       jobId: job.id,

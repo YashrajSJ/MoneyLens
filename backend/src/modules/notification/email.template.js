@@ -8,7 +8,9 @@ const escapeHtml = (value = "") => {
 };
 
 const formatAmount = (amount = 0) => {
-  return Number(amount || 0).toFixed(2);
+  const value = Number(amount);
+
+  return Number.isFinite(value) ? value.toFixed(2) : "0.00";
 };
 
 const getMonthName = (month) => {
@@ -35,16 +37,24 @@ const generateTestEmailTemplate = ({ name }) => {
 const generateMonthlyReportTemplate = ({ name, month, year, dashboard }) => {
   const safeName = escapeHtml(name || "there");
   const monthName = getMonthName(month);
+
   const summary = dashboard?.summary || {};
 
-  const categories = dashboard?.categories || [];
+  const totalIncome = summary.totalIncome ?? summary.income ?? 0;
+  const totalExpenses = summary.totalExpenses ?? summary.expenses ?? 0;
+  const netSavings = summary.netSavings ?? totalIncome - totalExpenses;
+  const transactionCount = summary.transactionCount ?? 0;
+
+  const categories =
+    dashboard?.categories || dashboard?.categoryBreakdown || [];
+
   const categoryRows = categories
     .slice(0, 5)
     .map(
       (category) =>
         `<li>${escapeHtml(category.category)}: ${formatAmount(
-          category.totalSpent
-        )}</li>`
+          category.totalSpent,
+        )}</li>`,
     )
     .join("");
 
@@ -57,10 +67,10 @@ const generateMonthlyReportTemplate = ({ name, month, year, dashboard }) => {
 
       <h3>Summary</h3>
       <ul>
-        <li>Total income: ${formatAmount(summary.totalIncome)}</li>
-        <li>Total expenses: ${formatAmount(summary.totalExpenses)}</li>
-        <li>Net savings: ${formatAmount(summary.netSavings)}</li>
-        <li>Transactions: ${summary.transactionCount || 0}</li>
+       <li>Total income: ${formatAmount(totalIncome)}</li>
+       <li>Total expenses: ${formatAmount(totalExpenses)}</li>
+       <li>Net savings: ${formatAmount(netSavings)}</li>
+       <li>Transactions: ${transactionCount}</li>
       </ul>
 
       <h3>Top spending categories</h3>
@@ -69,9 +79,9 @@ const generateMonthlyReportTemplate = ({ name, month, year, dashboard }) => {
       </ul>
     `,
     text: `${monthName} ${year} report: income ${formatAmount(
-      summary.totalIncome
-    )}, expenses ${formatAmount(summary.totalExpenses)}, net savings ${formatAmount(
-      summary.netSavings
+      totalIncome,
+    )}, expenses ${formatAmount(totalExpenses)}, net savings ${formatAmount(
+      netSavings,
     )}.`,
   };
 };
@@ -100,7 +110,7 @@ const generateBudgetAlertTemplate = ({
       </ul>
     `,
     text: `Budget alert: ${safeAccountName} crossed ${threshold}%. Spent ${formatAmount(
-      spentAmount
+      spentAmount,
     )} out of ${formatAmount(budgetAmount)}.`,
   };
 };

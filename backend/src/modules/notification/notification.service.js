@@ -71,11 +71,11 @@ const updateNotificationPreferenceService = async ({ userId, body }) => {
     if (body[field] !== undefined) {
       update[field] = body[field];
     }
-
-    if (Object.keys(update).length === 0) {
-      throw new ApiError(400, "At least one preference field is required");
-    }
   });
+
+  if (Object.keys(update).length === 0) {
+    throw new ApiError(400, "At least one preference field is required");
+  }
 
   return await NotificationPreference.findOneAndUpdate(
     { userId },
@@ -304,6 +304,10 @@ const buildMonthRange = ({ month, year }) => {
 };
 
 const queueMonthlyReportEmailService = async ({ user, month, year }) => {
+  if (!user.email) {
+    throw new ApiError(400, "User email not found");
+  }
+
   const preferences = await getNotificationPreferenceService({
     userId: user._id,
   });
@@ -313,30 +317,6 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
   }
 
   const dedupeKey = `monthly-report:${user._id}:${year}:${month}`;
-
-  const { notification, created } = await createNotificationService({
-    userId: user._id,
-    type: NOTIFICATION_TYPES.MONTHLY_REPORT,
-    title: `Monthly report for ${month}/${year}`,
-    message: "Your monthly financial report has been prepared.",
-    dedupeKey,
-    metadata: {
-      month,
-      year,
-    },
-  });
-
-  if (!created) {
-    throw new ApiError(409, "Monthly report already queued for this month");
-  }
-
-  if (!preferences.emailEnabled || !preferences.monthlyReports) {
-    return {
-      notification,
-      emailQueued: false,
-      reason: "Monthly report emails are disabled",
-    };
-  }
 
   const { from, to } = buildMonthRange({ month, year });
 
@@ -357,38 +337,67 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
     dashboard,
   });
 
-  const email = await queueEmailDeliveryService({
-    userId: user._id,
-    to: user.email,
-    subject: template.subject,
-    html: template.html,
-    text: template.text,
-    type: EMAIL_TYPES.MONTHLY_REPORT,
-    dedupeKey,
-    metadata: {
-      notificationId: notification._id,
-      month,
-      year,
-    },
-  });
+  let notification;
 
-  logger.info(
-    {
+  try {
+    const createdResult = await createNotificationService({
       userId: user._id,
-      notificationId: notification._id,
-      emailLogId: email.emailLogId,
-      month,
-      year,
-    },
-    "Monthly report email queued",
-  );
+      type: NOTIFICATION_TYPES.MONTHLY_REPORT,
+      title: `Monthly report for ${month}/${year}`,
+      message: "Your monthly financial report has been prepared.",
+      dedupeKey,
+      metadata: {
+        month,
+        year,
+      },
+    });
 
-  return {
-    notification,
-    emailQueued: true,
-    email,
-    dashboard,
-  };
+    notification = createdResult.notification;
+
+    if (!createdResult.created) {
+      throw new ApiError(409, "Monthly report already queued for this month");
+    }
+
+    const email = await queueEmailDeliveryService({
+      userId: user._id,
+      to: user.email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+      type: EMAIL_TYPES.MONTHLY_REPORT,
+      dedupeKey,
+      metadata: {
+        notificationId: notification._id,
+        month,
+        year,
+      },
+    });
+
+    logger.info(
+      {
+        userId: user._id,
+        notificationId: notification._id,
+        emailLogId: email.emailLogId,
+        jobId: email.jobId,
+        month,
+        year,
+      },
+      "Monthly report email queued",
+    );
+
+    return {
+      notification,
+      emailQueued: true,
+      email,
+      dashboard,
+    };
+  } catch (error) {
+    if (notification?._id) {
+      await Notification.deleteOne({ _id: notification._id }).catch(() => {});
+    }
+
+    throw error;
+  }
 };
 
 const createBudgetAlertNotificationService = async ({

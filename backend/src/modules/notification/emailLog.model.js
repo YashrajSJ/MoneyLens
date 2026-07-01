@@ -43,6 +43,12 @@ const emailLogSchema = new Schema(
       index: true,
     },
 
+    jobId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+
     providerMessageId: {
       type: String,
       trim: true,
