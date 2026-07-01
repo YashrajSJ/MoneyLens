@@ -10,6 +10,8 @@ import {
   processReceiptParsingJobService,
 } from "../receipt/receipt.service.js";
 
+import { sendQueuedEmailService } from "../notification/email.service.js";
+
 import { JOB_NAMES, QUEUE_NAMES } from "./job.constants.js";
 
 let workers = [];
@@ -151,7 +153,35 @@ const startJobWorkers = () => {
     },
   );
 
-  workers = [recurringWorker, insightWorker, receiptWorker];
+  const emailWorker = new Worker(
+    QUEUE_NAMES.EMAIL,
+    async (job) => {
+      if (job.name !== JOB_NAMES.SEND_EMAIL) {
+        throw new Error(`Unknown email job: ${job.name}`);
+      }
+
+      logger.info(
+        {
+          jobId: job.id,
+          userId: job.data.userId,
+          emailLogId: job.data.emailLogId,
+          type: job.data.type,
+        },
+        "Email job started",
+      );
+
+      return await sendQueuedEmailService({
+        jobId: job.id,
+        ...job.data,
+      });
+    },
+    {
+      connection: redisConnection,
+      concurrency: 3,
+    },
+  );
+
+  workers = [recurringWorker, insightWorker, receiptWorker, emailWorker];
 
   workers.forEach((worker) => {
     worker.on("completed", (job) => {
@@ -172,6 +202,16 @@ const startJobWorkers = () => {
           queueName: job?.queueName,
         },
         "Job failed",
+      );
+    });
+
+    worker.on("error", (err) => {
+      logger.error(
+        {
+          err,
+          queueName: worker.name,
+        },
+        "Worker error",
       );
     });
   });

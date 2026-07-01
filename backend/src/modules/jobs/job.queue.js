@@ -33,24 +33,32 @@ const receiptQueue = new Queue(QUEUE_NAMES.RECEIPT, {
   defaultJobOptions,
 });
 
+const emailQueue = new Queue(QUEUE_NAMES.EMAIL, {
+  connection: redisConnection,
+  defaultJobOptions,
+});
+
 const queueMap = {
   [QUEUE_NAMES.RECURRING]: recurringQueue,
   [QUEUE_NAMES.INSIGHT]: insightQueue,
   [QUEUE_NAMES.RECEIPT]: receiptQueue,
+  [QUEUE_NAMES.EMAIL]: emailQueue,
 };
 
 const closeJobQueues = async () => {
   await Promise.all([
-  recurringQueue.close(),
-  insightQueue.close(),
-  receiptQueue.close(),
-]);
+    recurringQueue.close(),
+    insightQueue.close(),
+    receiptQueue.close(),
+    emailQueue.close(),
+  ]);
 };
 
 export {
   recurringQueue,
   insightQueue,
   receiptQueue,
+  emailQueue,
   queueMap,
   closeJobQueues,
 };

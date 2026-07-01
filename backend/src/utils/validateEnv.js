@@ -12,6 +12,11 @@ const requiredEnvVars = [
   "AI_API_KEY",
   "REDIS_URL",
   "ENABLE_WORKERS",
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_USER",
+  "SMTP_PASS",
+  "MAIL_FROM",
 ];
 
 export const validateEnv = () => {

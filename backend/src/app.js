@@ -15,6 +15,7 @@ import recurringRouter from "../src/modules/recurring/recurring.route.js";
 import receiptRouter from "../src/modules/receipt/receipt.route.js";
 import insightRouter from "../src/modules/insight/insight.route.js";
 import jobRouter from "../src/modules/jobs/job.route.js";
+import notificationRouter from "../src/modules/notification/notification.route.js";
 
 const app = express();
 app.use(helmet());
@@ -46,6 +47,7 @@ app.use("/api/v1/recurring", recurringRouter);
 app.use("/api/v1/receipts", receiptRouter);
 app.use("/api/v1/insights", insightRouter);
 app.use("/api/v1/jobs", jobRouter);
+app.use("/api/v1/notifications", notificationRouter);
 app.use(errorHandler);
 
 export default app;
