@@ -3,6 +3,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 
+import mongoSanitize from "express-mongo-sanitize";
+import { globalRateLimiter } from "./middlewares/rateLimit.middleware.js";
+
 import healthcheckRouter from "../src/modules/healthcheck/healthcheck.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
@@ -18,6 +21,7 @@ import jobRouter from "../src/modules/jobs/job.route.js";
 import notificationRouter from "../src/modules/notification/notification.route.js";
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(helmet());
 app.disable("x-powered-by");
 
@@ -32,9 +36,13 @@ app.use(
 
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(cookieParser());
+
+app.use(mongoSanitize());
+
 app.use(express.static("public"));
 
-app.use(cookieParser());
+app.use(globalRateLimiter);
 
 
 app.use("/api/v1/healthcheck", healthcheckRouter);

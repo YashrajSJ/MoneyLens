@@ -7,6 +7,8 @@ import { MAX_ACCOUNT_BALANCE } from "../account/account.constants.js";
 
 import { RECURRING_STATUS } from "./transaction.constants.js";
 
+import { deleteUserAnalyticsCache } from "../../utils/cache.js";
+
 const getBalanceEffect = (transaction) => {
   if (transaction.status !== "COMPLETED") return 0;
 
@@ -43,7 +45,7 @@ const ensureValidBalance = (account, balanceEffect) => {
 };
 
 const createTransactionService = async ({ userId, payload }) => {
-  return await withTransaction(
+  const transaction = await withTransaction(
     async (session) => {
       const account = await Account.findOne({
         _id: payload.accountId,
@@ -86,7 +88,12 @@ const createTransactionService = async ({ userId, payload }) => {
       return transaction;
     },
     "createTransaction failed"
+
   );
+
+   await deleteUserAnalyticsCache(userId);
+
+    return transaction;
 };
 
 const getTransactionsService = async ({ userId, query }) => {
@@ -148,7 +155,7 @@ const updateTransactionService = async ({
   transaction,
   payload,
 }) => {
-  return await withTransaction(
+  const updatedTransaction =  await withTransaction(
     async (session) => {
       const oldAccount = await Account.findOne({
         _id: transaction.accountId,
@@ -227,10 +234,15 @@ const updateTransactionService = async ({
     },
     "updateTransaction failed"
   );
+
+  await deleteUserAnalyticsCache(userId);
+
+  return updatedTransaction;
+
 };
 
 const deleteTransactionService = async ({ userId, transaction }) => {
-  return await withTransaction(
+  const result = await withTransaction(
     async (session) => {
       const account = await Account.findOne({
         _id: transaction.accountId,
@@ -258,10 +270,14 @@ const deleteTransactionService = async ({ userId, transaction }) => {
     },
     "deleteTransaction failed"
   );
+
+  await deleteUserAnalyticsCache(userId);
+
+  return result;
 };
 
 const bulkDeleteTransactionsService = async ({ userId, transactionIds }) => {
-  return await withTransaction(
+   const deleteCount = await withTransaction(
     async (session) => {
       const transactions = await Transaction.find({
         _id: { $in: transactionIds },
@@ -310,6 +326,10 @@ const bulkDeleteTransactionsService = async ({ userId, transactionIds }) => {
     },
     "bulkDeleteTransactions failed"
   );
+
+  await deleteUserAnalyticsCache(userId);
+
+  return deletedCount;
 };
 
 export {

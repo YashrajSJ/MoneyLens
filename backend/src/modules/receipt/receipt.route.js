@@ -20,17 +20,19 @@ import {
   prepareTransactionValidator,
 } from "./receipt.validator.js";
 
+import { aiRateLimiter } from "../../middlewares/rateLimit.middleware.js";
+
 const router = Router();
 
-router.use(verifyJWT);
+router.use(verifyJWT); 
 
-router.route("/scan").post(uploadReceipt, scanReceipt);
+router.route("/scan").post(aiRateLimiter, uploadReceipt, scanReceipt);
 
 router.route("/").get(getReceiptsValidator(), validate, getReceipts);
 
 router
   .route("/:receiptId/retry-parsing")
-  .post(receiptIdValidator(), validate, resolveReceipt, retryReceiptParsing);
+  .post(aiRateLimiter,receiptIdValidator(),validate,resolveReceipt,retryReceiptParsing );
 
 router
   .route("/:receiptId/prepare-transaction")

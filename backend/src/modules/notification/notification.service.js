@@ -141,8 +141,8 @@ const getNotificationsService = async ({ userId, query }) => {
   };
 
   if (query.isRead !== undefined) {
-    filter.isRead = query.isRead;
-  }
+  filter.isRead = query.isRead === true || query.isRead === "true";
+}
 
   if (query.type) {
     filter.type = query.type;
@@ -391,13 +391,13 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
       email,
       dashboard,
     };
-  } catch (error) {
-    if (notification?._id) {
-      await Notification.deleteOne({ _id: notification._id }).catch(() => {});
-    }
-
-    throw error;
+ } catch (error) {
+  if (notification?._id && error.statusCode !== 409) {
+    await Notification.deleteOne({ _id: notification._id }).catch(() => {});
   }
+
+  throw error;
+}
 };
 
 const createBudgetAlertNotificationService = async ({

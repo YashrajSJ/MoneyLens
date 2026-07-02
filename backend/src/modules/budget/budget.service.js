@@ -4,6 +4,8 @@ import { Transaction } from "../transaction/transaction.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { BUDGET_STATUSES } from "./budget.constants.js";
 
+import { deleteUserAnalyticsCache } from "../../utils/cache.js";
+
 const getMonthDateRange = (month, year) => {
   const startDate = new Date(Date.UTC(year, month - 1, 1));
   const endDate = new Date(Date.UTC(year, month, 1));

@@ -15,12 +15,13 @@ import {
 
 import { validate } from "../../middlewares/validator.middleware.js";
 import { verifyJWT } from "../../middlewares/auth.middleware.js";
+import { authRateLimiter } from "../../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(userRegisterValidator(), validate, registerUser);
+router.route("/register").post(authRateLimiter,userRegisterValidator(), validate, registerUser);
 
-router.route("/login").post(userLoginValidator(), validate, loginUser);
+router.route("/login").post(authRateLimiter,userLoginValidator(), validate, loginUser);
 
 router.route("/logout").post(verifyJWT, logoutUser);
 

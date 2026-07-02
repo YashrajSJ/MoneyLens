@@ -17,21 +17,23 @@ import {
   scheduleRecurringJobValidator,
 } from "./job.validator.js";
 
+import { jobsRateLimiter } from "../../middlewares/rateLimit.middleware.js";
+
 const router = Router();
 
 router.use(verifyJWT);
 
 router
   .route("/recurring/process-due")
-  .post(enqueueRecurringJobValidator(), validate, enqueueRecurringJob);
+  .post(jobsRateLimiter, enqueueRecurringJobValidator(), validate, enqueueRecurringJob);
 
 router
   .route("/recurring/schedule")
-  .post(scheduleRecurringJobValidator(), validate, scheduleRecurringJob);
+  .post(jobsRateLimiter, scheduleRecurringJobValidator(), validate, scheduleRecurringJob);
 
 router
   .route("/insights/generate")
-  .post(enqueueInsightJobValidator(), validate, enqueueInsightJob);
+  .post(jobsRateLimiter, enqueueInsightJobValidator(), validate, enqueueInsightJob);
 
 router
   .route("/:queueName/:jobId")

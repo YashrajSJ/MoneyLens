@@ -12,25 +12,62 @@ import {
   getBudgetProgressService,
 } from "./analytics.service.js";
 
+import {
+  buildCacheKey,
+  getCache,
+  setCache,
+} from "../../utils/cache.js";
+
+import { CACHE_TTL_SECONDS } from "../security/security.constants.js";
+
 const getDashboardAnalytics = asyncHandler(async (req, res) => {
-  const analytics = await getDashboardAnalyticsService({
+  const cacheKey = buildCacheKey([
+    "analytics",
+    "dashboard",
+    req.user._id,
+    req.originalUrl,
+  ]);
+
+  const cachedDashboard = await getCache(cacheKey);
+
+  if (cachedDashboard) {
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          cachedDashboard,
+          "Dashboard analytics fetched from cache"
+        )
+      );
+  }
+
+  const dashboard = await getDashboardAnalyticsService({
     userId: req.user._id,
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { analytics },
-      "Dashboard analytics fetched successfully"
-    )
+  await setCache(
+    cacheKey,
+    dashboard,
+    CACHE_TTL_SECONDS.DASHBOARD_ANALYTICS
   );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        dashboard,
+        "Dashboard analytics fetched successfully"
+      )
+    );
 });
 
 const getSummary = asyncHandler(async (req, res) => {
   const summary = await getSummaryService({
     userId: req.user._id,
-    query: req.query,
+    query: req.query,    
   });
 
   return res

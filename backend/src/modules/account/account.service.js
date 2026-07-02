@@ -1,8 +1,10 @@
 import { Account } from "./account.model.js";
 import { withTransaction } from "../../utils/withTransaction.js";
 
+import { deleteUserAnalyticsCache } from "../../utils/cache.js";
+
 const createAccountService = async ({ userId, payload }) => {
-  return await withTransaction(
+   const account =await withTransaction(
     async (session) => {
       const {
         name,
@@ -46,6 +48,9 @@ const createAccountService = async ({ userId, payload }) => {
     },
     { action: "createAccount", userId }
   );
+  await deleteUserAnalyticsCache(userId);
+
+  return account;
 };
 
 const getAccountsService = async ({ userId }) => {
@@ -56,7 +61,7 @@ const getAccountsService = async ({ userId }) => {
 };
 
 const updateAccountService = async ({ userId, account, payload }) => {
-  return await withTransaction(
+  const updatedAccount = await withTransaction(
     async (session) => {
       if (payload.isDefault === true) {
         await Account.updateMany(
@@ -91,10 +96,13 @@ const updateAccountService = async ({ userId, account, payload }) => {
     },
     { action: "updateAccount", userId, accountId: account._id }
   );
+  await deleteUserAnalyticsCache(userId);
+
+  return updatedAccount;
 };
 
 const setDefaultAccountService = async ({ userId, account}) => {
-  return await withTransaction(
+  const updatedAccount = await withTransaction(
     async (session) => {
       await Account.updateMany(
         { userId, isDefault: true },
@@ -109,10 +117,13 @@ const setDefaultAccountService = async ({ userId, account}) => {
     },
     { action: "setDefaultAccount", userId, accountId: account._id }
   );
+  await deleteUserAnalyticsCache(userId);
+
+  return updatedAccount;
 };
 
 const deleteAccountService = async ({ userId, account }) => {
-  return await withTransaction(
+  const result = await withTransaction(
     async (session) => {
       const wasDefault = account.isDefault;
 
@@ -139,6 +150,9 @@ const deleteAccountService = async ({ userId, account }) => {
     },
     { action: "deleteAccount", userId, accountId: account._id}
   );
+  await deleteUserAnalyticsCache(userId);
+
+  return result;
 };
 
 export {

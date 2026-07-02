@@ -14,7 +14,7 @@ const formatAmount = (amount = 0) => {
 };
 
 const getMonthName = (month) => {
-  return new Date(Date.UTC(2026, month - 1, 1)).toLocaleString("en-US", {
+  return new Date(Date.UTC(1000, month - 1, 1)).toLocaleString("en-US", {
     month: "long",
   });
 };

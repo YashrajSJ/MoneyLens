@@ -22,6 +22,8 @@ import {
   updateNotificationPreferenceValidator,
 } from "./notification.validator.js";
 
+import { emailRateLimiter } from "../../middlewares/rateLimit.middleware.js";
+
 const router = Router();
 
 router.use(verifyJWT);
@@ -49,11 +51,11 @@ router
 
 router
   .route("/test-email")
-  .post(queueTestEmail);
+  .post(emailRateLimiter, queueTestEmail);
 
 router
   .route("/monthly-report")
-  .post(monthlyReportValidator(), validate, queueMonthlyReportEmail);
+  .post( emailRateLimiter, monthlyReportValidator(), validate, queueMonthlyReportEmail);
 
 router
   .route("/:notificationId/read")

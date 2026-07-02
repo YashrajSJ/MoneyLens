@@ -16,6 +16,8 @@ import {
   MAX_RECURRING_BATCHES_PER_JOB,
 } from "./recurring.constants.js";
 
+import { deleteUserAnalyticsCache } from "../../utils/cache.js";
+
 const calculateNextRecurringDate = (date, interval) => {
   const nextDate = new Date(date);
 
@@ -333,6 +335,10 @@ const processDueRecurringTransactionsService = async ({
       $nin: excludedTransactionIds,
     },
   });
+
+  if (processed.length > 0) {
+  await deleteUserAnalyticsCache(userId);
+  }
 
   return {
     jobId,

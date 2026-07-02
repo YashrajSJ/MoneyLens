@@ -21,13 +21,15 @@ import {
   monthlySummaryValidator,
 } from "./insight.validator.js";
 
+import { aiRateLimiter } from "../../middlewares/rateLimit.middleware.js";
+
 const router = Router();
 
 router.use(verifyJWT);
 
 router
   .route("/generate")
-  .post(generateInsightsValidator(), validate, generateInsights);
+  .post(generateInsightsValidator(), validate, aiRateLimiter, generateInsights);
 
 router
   .route("/monthly-summary")
