@@ -34,6 +34,61 @@ const generateTestEmailTemplate = ({ name }) => {
   };
 };
 
+const generatePasswordResetTemplate = ({
+  name,
+  resetUrl,
+  token,
+  expiresInMinutes = 15,
+}) => {
+  const safeName = escapeHtml(name || "there");
+  const safeResetUrl = escapeHtml(resetUrl);
+  const safeToken = escapeHtml(token);
+
+  return {
+    subject: "Reset your MoneyLens password",
+    html: `
+      <h2>Password Reset Request</h2>
+      <p>Hi ${safeName},</p>
+      <p>We received a request to reset your MoneyLens password.</p>
+      <p>This reset link will expire in ${expiresInMinutes} minutes.</p>
+      <p><a href="${safeResetUrl}">Reset your password</a></p>
+      <p>If the link does not work, use this token:</p>
+      <p><strong>${safeToken}</strong></p>
+      <p>If you did not request this, you can safely ignore this email.</p>
+    `,
+    text: `Hi ${
+      name || "there"
+    }, reset your MoneyLens password using this link: ${resetUrl}. Token: ${token}. This expires in ${expiresInMinutes} minutes.`,
+  };
+};
+
+const generateEmailVerificationTemplate = ({
+  name,
+  verificationUrl,
+  token,
+  expiresInMinutes = 20,
+}) => {
+  const safeName = escapeHtml(name || "there");
+  const safeVerificationUrl = escapeHtml(verificationUrl);
+  const safeToken = escapeHtml(token);
+
+  return {
+    subject: "Verify your MoneyLens email",
+    html: `
+      <h2>Verify Your Email</h2>
+      <p>Hi ${safeName},</p>
+      <p>Welcome to MoneyLens. Please verify your email address to secure your account.</p>
+      <p>This verification link will expire in ${expiresInMinutes} minutes.</p>
+      <p><a href="${safeVerificationUrl}">Verify email</a></p>
+      <p>If the link does not work, use this token:</p>
+      <p><strong>${safeToken}</strong></p>
+    `,
+    text: `Hi ${
+      name || "there"
+    }, verify your MoneyLens email using this link: ${verificationUrl}. Token: ${token}. This expires in ${expiresInMinutes} minutes.`,
+  };
+};
+
 const generateMonthlyReportTemplate = ({ name, month, year, dashboard }) => {
   const safeName = escapeHtml(name || "there");
   const monthName = getMonthName(month);
@@ -117,6 +172,8 @@ const generateBudgetAlertTemplate = ({
 
 export {
   generateTestEmailTemplate,
+  generatePasswordResetTemplate,
+  generateEmailVerificationTemplate,
   generateMonthlyReportTemplate,
   generateBudgetAlertTemplate,
 };

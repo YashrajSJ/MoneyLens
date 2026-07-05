@@ -19,7 +19,6 @@ const userRegisterValidator = () => {
       .withMessage("Username must be lowercase"),
 
     body("password")
-      .trim()
       .notEmpty()
       .withMessage("Password is required")
       .isLength({ min: 8 })
@@ -48,4 +47,45 @@ const userLoginValidator = () => {
   ];
 };
 
-export { userRegisterValidator, userLoginValidator };
+const forgotPasswordValidator = () => {
+  return [
+    body("email")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Email is invalid"),
+  ];
+};
+
+const resetPasswordValidator = () => {
+  return [
+    body("token")
+      .trim()
+      .notEmpty()
+      .withMessage("Reset token is required"),
+
+    body("newPassword")
+      .notEmpty()
+      .withMessage("New password is required")
+      .isLength({ min: 8 })
+      .withMessage("New password must be at least 8 characters long"),
+  ];
+};
+
+const verifyEmailValidator = () => {
+  return [
+    body("token")
+      .trim()
+      .notEmpty()
+      .withMessage("Email verification token is required"),
+  ];
+};
+
+export {
+  userRegisterValidator,
+  userLoginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  verifyEmailValidator,
+};
