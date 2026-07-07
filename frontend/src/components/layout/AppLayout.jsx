@@ -2,8 +2,8 @@ import {
   Bell,
   LayoutDashboard,
   Plus,
-  ReceiptText,
   WalletCards,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -66,10 +66,15 @@ export const AppLayout = ({ children }) => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="hidden h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
+              className="group relative hidden h-10 items-center overflow-hidden rounded-xl bg-gradient-to-r from-rose-200 via-amber-200 to-emerald-200 p-px shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:inline-flex"
             >
-              <ReceiptText size={17} />
-              Scan Receipt
+              <span className="inline-flex h-full items-center gap-2 rounded-[11px] bg-white px-3.5 text-sm font-medium text-slate-800 transition group-hover:bg-slate-50">
+                <Sparkles
+                  size={17}
+                  className="text-rose-500 transition group-hover:scale-110"
+                />
+                Scan Receipt
+              </span>
             </button>
 
             <button
