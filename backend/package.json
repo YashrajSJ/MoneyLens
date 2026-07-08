@@ -32,7 +32,8 @@
     "mongoose": "^9.6.2",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.3",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",

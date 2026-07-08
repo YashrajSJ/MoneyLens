@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import streamifier from "streamifier";
 
 import { cloudinary } from "../../config/cloudinary.js";
 
@@ -19,13 +20,27 @@ import {
   RECEIPT_STATUSES,
 } from "./receipt.constants.js";
 
-const uploadReceiptToCloudinary = async (file) => {
-  const base64 = file.buffer.toString("base64");
-  const dataUri = `data:${file.mimetype};base64,${base64}`;
+const uploadReceiptToCloudinary = (file) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: CLOUDINARY_RECEIPT_FOLDER,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
 
-  return await cloudinary.uploader.upload(dataUri, {
-    folder: CLOUDINARY_RECEIPT_FOLDER,
-    resource_type: "image",
+        if (!result) {
+          return reject(new ApiError(502, "Cloudinary upload failed"));
+        }
+
+        resolve(result);
+      },
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(uploadStream);
   });
 };
 

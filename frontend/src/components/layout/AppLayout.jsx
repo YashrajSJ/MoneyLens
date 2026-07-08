@@ -1,5 +1,6 @@
 import {
   Bell,
+  Landmark,
   LayoutDashboard,
   Plus,
   WalletCards,
@@ -14,6 +15,11 @@ const navItems = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Accounts",
+    href: "/accounts",
+    icon: Landmark,
   },
 ];
 
@@ -50,7 +56,7 @@ export const AppLayout = ({ children }) => {
                       [
                         "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition",
                         isActive
-                          ? "bg-slate-950 text-white"
+                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
                           : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
                       ].join(" ")
                     }
@@ -66,7 +72,7 @@ export const AppLayout = ({ children }) => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="group relative hidden h-10 items-center overflow-hidden rounded-xl bg-gradient-to-r from-rose-200 via-amber-200 to-emerald-200 p-px shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:inline-flex"
+              className="group relative hidden h-10 items-center overflow-hidden rounded-xl bg-linear-to-r from-rose-200 via-amber-200 to-emerald-200 p-px shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:inline-flex"
             >
               <span className="inline-flex h-full items-center gap-2 rounded-[11px] bg-white px-3.5 text-sm font-medium text-slate-800 transition group-hover:bg-slate-50">
                 <Sparkles

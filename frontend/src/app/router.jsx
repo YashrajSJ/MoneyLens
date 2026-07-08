@@ -7,6 +7,7 @@ import { DashboardPage } from "../pages/DashboardPage.jsx";
 import { LoginPage } from "../pages/LoginPage.jsx";
 import { NotFoundPage } from "../pages/NotFoundPage.jsx";
 import { RegisterPage } from "../pages/RegisterPage.jsx";
+import { AccountsPage } from "../pages/AccountsPage.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { data: user, isLoading } = useCurrentUser();
@@ -65,6 +66,17 @@ export const AppRouter = () => {
           <ProtectedRoute>
             <AppLayout>
               <DashboardPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/accounts"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <AccountsPage />
             </AppLayout>
           </ProtectedRoute>
         }

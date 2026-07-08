@@ -5,11 +5,12 @@ import {
   PiggyBank,
   Plus,
   ShieldCheck,
-  WalletCards,
-  Landmark, 
+  BadgeIndianRupee,
+  Landmark,
 } from "lucide-react";
 
 import { formatCurrency } from "../utils/formatters";
+import { Link } from "react-router-dom";
 
 const stats = [
   {
@@ -138,10 +139,13 @@ export const DashboardPage = () => {
           </div>
 
           <div className="flex flex-wrap gap-2 md:justify-end">
-            <button className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
+            <Link
+              to="/accounts"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+            >
               <Landmark size={17} />
               Add Account
-            </button>
+            </Link>
 
             <button className="inline-flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-medium text-amber-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-md">
               <PiggyBank size={17} />
@@ -192,7 +196,7 @@ export const DashboardPage = () => {
                 <ShieldCheck className="text-blue-600" size={18} />
               )}
               {stat.tone === "neutral" && (
-                <WalletCards className="text-slate-500" size={18} />
+                <BadgeIndianRupee className="text-slate-500" size={18} />
               )}
             </div>
 
