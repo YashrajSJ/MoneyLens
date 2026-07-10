@@ -11,6 +11,7 @@ import {
 
 import { formatCurrency } from "../utils/formatters";
 import { Link } from "react-router-dom";
+import { useCurrentUser } from "../features/auth/hooks/useCurrentUser";
 
 const stats = [
   {
@@ -110,6 +111,10 @@ const getHelperClassName = (tone) => {
 };
 
 export const DashboardPage = () => {
+  const { data: user } = useCurrentUser();
+
+  const firstName =
+    user?.fullName?.trim()?.split(" ")[0] || user?.username || "there";
   return (
     <div className="space-y-8">
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
@@ -129,7 +134,7 @@ export const DashboardPage = () => {
             </div>
 
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
-              Welcome back, Yash
+              Welcome back, {firstName}
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 md:text-base">

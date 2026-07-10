@@ -2,11 +2,18 @@ import {
   Bell,
   Landmark,
   LayoutDashboard,
+  LogOut,
   Plus,
+  ReceiptText,
   WalletCards,
   Sparkles,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { authApi } from "../../features/auth/api/authApi";
+import { useCurrentUser } from "../../features/auth/hooks/useCurrentUser";
 
 import { BgGradient } from "./BgGradient";
 
@@ -21,9 +28,33 @@ const navItems = [
     href: "/accounts",
     icon: Landmark,
   },
+  {
+    label: "Transactions",
+    href: "/transactions",
+    icon: ReceiptText,
+  },
 ];
 
 export const AppLayout = ({ children }) => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: user } = useCurrentUser();
+
+  const firstName =
+    user?.fullName?.trim()?.split(" ")[0] || user?.username || "User";
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+
+      queryClient.clear();
+
+      toast.success("Logged out successfully");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      toast.error(error.message || "Logout failed");
+    }
+  };
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur-md">
@@ -83,13 +114,17 @@ export const AppLayout = ({ children }) => {
               </span>
             </button>
 
-            <button
-              type="button"
+            <Link
+              to="/transactions"
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-slate-950 px-3 text-sm font-medium text-white transition hover:bg-slate-800"
             >
               <Plus size={17} />
               Add Transaction
-            </button>
+            </Link>
+
+            <div className="hidden items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 md:flex">
+              {firstName}
+            </div>
 
             <button
               type="button"
@@ -98,6 +133,15 @@ export const AppLayout = ({ children }) => {
             >
               <Bell size={20} />
               <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-emerald-500" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50"
+              aria-label="Logout"
+            >
+              <LogOut size={20} />
             </button>
           </div>
         </nav>

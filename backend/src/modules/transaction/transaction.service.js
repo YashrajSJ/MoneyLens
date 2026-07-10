@@ -329,7 +329,7 @@ const bulkDeleteTransactionsService = async ({ userId, transactionIds }) => {
 
   await deleteUserAnalyticsCache(userId);
 
-  return deletedCount;
+  return deleteCount;
 };
 
 export {

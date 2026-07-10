@@ -8,6 +8,10 @@ import { LoginPage } from "../pages/LoginPage.jsx";
 import { NotFoundPage } from "../pages/NotFoundPage.jsx";
 import { RegisterPage } from "../pages/RegisterPage.jsx";
 import { AccountsPage } from "../pages/AccountsPage.jsx";
+import { ForgotPasswordPage } from "../pages/ForgotPasswordPage.jsx";
+import { ResetPasswordPage } from "../pages/ResetPasswordPage.jsx";
+import { VerifyEmailPage } from "../pages/VerifyEmailPage.jsx";
+import { TransactionsPage } from "../pages/TransactionsPage.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { data: user, isLoading } = useCurrentUser();
@@ -61,6 +65,19 @@ export const AppRouter = () => {
       />
 
       <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
+
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
@@ -77,6 +94,17 @@ export const AppRouter = () => {
           <ProtectedRoute>
             <AppLayout>
               <AccountsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/transactions"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <TransactionsPage />
             </AppLayout>
           </ProtectedRoute>
         }
