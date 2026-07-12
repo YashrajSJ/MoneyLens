@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Download, Plus } from "lucide-react";
 
 import { TransactionFilters } from "../features/transactions/components/TransactionFilters";
@@ -28,7 +29,9 @@ const initialFilters = {
 
 const cleanFilters = (filters) => {
   return Object.fromEntries(
-    Object.entries(filters).filter(([, value]) => value !== "" && value !== null),
+    Object.entries(filters).filter(
+      ([, value]) => value !== "" && value !== null,
+    ),
   );
 };
 
@@ -37,6 +40,10 @@ export const TransactionsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const isCreateFromUrl = searchParams.get("create") === "true";
+  const shouldShowForm = isFormOpen || isCreateFromUrl;
 
   const queryFilters = useMemo(() => cleanFilters(filters), [filters]);
 
@@ -73,6 +80,10 @@ export const TransactionsPage = () => {
   const closeForm = () => {
     setSelectedTransaction(null);
     setIsFormOpen(false);
+
+    if (isCreateFromUrl) {
+      setSearchParams({});
+    }
   };
 
   const handleSubmit = async (payload) => {
@@ -110,7 +121,9 @@ export const TransactionsPage = () => {
   const toggleSelectAll = () => {
     const allSelected =
       transactions.length > 0 &&
-      transactions.every((transaction) => selectedIds.includes(transaction._id));
+      transactions.every((transaction) =>
+        selectedIds.includes(transaction._id),
+      );
 
     if (allSelected) {
       setSelectedIds([]);
@@ -198,7 +211,8 @@ export const TransactionsPage = () => {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 md:text-base">
-                Track income, expenses, recurring entries, payment methods, and merchant activity from one place.
+                Track income, expenses, recurring entries, payment methods, and
+                merchant activity from one place.
               </p>
             </div>
 
@@ -248,7 +262,8 @@ export const TransactionsPage = () => {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-500">
-            Showing page {pagination?.page || 1} of {pagination?.totalPages || 1}
+            Showing page {pagination?.page || 1} of{" "}
+            {pagination?.totalPages || 1}
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -305,10 +320,10 @@ export const TransactionsPage = () => {
         )}
       </div>
 
-      {isFormOpen && (
+      {shouldShowForm && (
         <TransactionFormModal
           key={selectedTransaction?._id || "create-transaction"}
-          open={isFormOpen}
+          open={shouldShowForm}
           transaction={selectedTransaction}
           accounts={accounts}
           onClose={closeForm}

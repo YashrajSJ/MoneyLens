@@ -158,9 +158,8 @@ export const AccountFormModal = ({
                 <input
                   id="accountBalance"
                   name="balance"
-                  type="number"
-                  min={0}
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0"
                   value={form.balance}
                   onChange={handleChange}

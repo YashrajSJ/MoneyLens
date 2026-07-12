@@ -1,5 +1,6 @@
 import {
   ArrowDownRight,
+  ArrowRight,
   ArrowUpRight,
   CalendarClock,
   PiggyBank,
@@ -7,6 +8,7 @@ import {
   ShieldCheck,
   BadgeIndianRupee,
   Landmark,
+  ReceiptText,
 } from "lucide-react";
 
 import { formatCurrency } from "../utils/formatters";
@@ -21,13 +23,13 @@ const stats = [
     tone: "neutral",
   },
   {
-    label: "Income",
+    label: "Income this month",
     value: 52000,
     helper: "+8% vs last month",
     tone: "positive",
   },
   {
-    label: "Expenses",
+    label: "Expenses this month",
     value: 18200,
     helper: "12% lower than last month",
     tone: "negative",
@@ -94,6 +96,30 @@ const upcomingPayments = [
   },
 ];
 
+const quickLinks = [
+  {
+    title: "Accounts",
+    description: "Manage balances and account details",
+    href: "/accounts",
+    icon: <Landmark size={19} />,
+    tone: "emerald",
+  },
+  {
+    title: "Transactions",
+    description: "Review income, expenses, and filters",
+    href: "/transactions",
+    icon: <ReceiptText size={19} />,
+    tone: "sky",
+  },
+  {
+    title: "Budgets",
+    description: "Track monthly spending limits",
+    href: "/budgets",
+    icon: <PiggyBank size={19} />,
+    tone: "amber",
+  },
+];
+
 const getHelperClassName = (tone) => {
   if (tone === "positive") {
     return "bg-emerald-50 text-emerald-700";
@@ -108,6 +134,38 @@ const getHelperClassName = (tone) => {
   }
 
   return "bg-slate-100 text-slate-600";
+};
+
+const getQuickLinkClassName = (tone) => {
+  if (tone === "emerald") {
+    return "group-hover:border-emerald-200 group-hover:bg-emerald-50/60";
+  }
+
+  if (tone === "sky") {
+    return "group-hover:border-sky-200 group-hover:bg-sky-50/60";
+  }
+
+  if (tone === "amber") {
+    return "group-hover:border-amber-200 group-hover:bg-amber-50/60";
+  }
+
+  return "group-hover:border-slate-300 group-hover:bg-slate-50";
+};
+
+const getQuickIconClassName = (tone) => {
+  if (tone === "emerald") {
+    return "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100";
+  }
+
+  if (tone === "sky") {
+    return "bg-sky-50 text-sky-700 group-hover:bg-sky-100";
+  }
+
+  if (tone === "amber") {
+    return "bg-amber-50 text-amber-700 group-hover:bg-amber-100";
+  }
+
+  return "bg-slate-100 text-slate-700 group-hover:bg-slate-200";
 };
 
 export const DashboardPage = () => {
@@ -145,17 +203,20 @@ export const DashboardPage = () => {
 
           <div className="flex flex-wrap gap-2 md:justify-end">
             <Link
-              to="/accounts"
+              to="/accounts?create=true"
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
             >
               <Landmark size={17} />
               Add Account
             </Link>
 
-            <button className="inline-flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-medium text-amber-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-md">
+            <Link
+              to="/budgets?create=true"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-sm font-medium text-amber-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-md"
+            >
               <PiggyBank size={17} />
               Create Budget
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -179,6 +240,55 @@ export const DashboardPage = () => {
               {formatCurrency(6200)} of {formatCurrency(10000)}
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white/90 p-5 shadow-sm backdrop-blur">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <h2 className="font-semibold text-slate-950">Money workspace</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Jump into the areas you use most to manage your money.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {quickLinks.map((item) => (
+            <Link
+              key={item.title}
+              to={item.href}
+              className={`group flex min-h-40 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${getQuickLinkClassName(
+                item.tone,
+              )}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex size-12 items-center justify-center rounded-2xl transition ${getQuickIconClassName(
+                      item.tone,
+                    )}`}
+                  >
+                    {item.icon}
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-950">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 text-sm leading-5 text-slate-500">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+
+                <ArrowRight
+                  size={17}
+                  className="mt-1 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-slate-700"
+                />
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 

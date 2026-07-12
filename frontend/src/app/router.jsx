@@ -12,6 +12,7 @@ import { ForgotPasswordPage } from "../pages/ForgotPasswordPage.jsx";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage.jsx";
 import { VerifyEmailPage } from "../pages/VerifyEmailPage.jsx";
 import { TransactionsPage } from "../pages/TransactionsPage.jsx";
+import { BudgetsPage } from "../pages/BudgetsPage.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { data: user, isLoading } = useCurrentUser();
@@ -105,6 +106,17 @@ export const AppRouter = () => {
           <ProtectedRoute>
             <AppLayout>
               <TransactionsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/budgets"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BudgetsPage />
             </AppLayout>
           </ProtectedRoute>
         }

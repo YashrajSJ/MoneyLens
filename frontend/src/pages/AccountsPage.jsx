@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { BadgeIndianRupee, Landmark, Plus, } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { BadgeIndianRupee, Landmark, Plus } from "lucide-react";
 
 import { AccountCard } from "../features/accounts/components/AccountCard";
 import { AccountFormModal } from "../features/accounts/components/AccountFormModal";
@@ -15,9 +16,12 @@ import { formatCurrency } from "../utils/formatters";
 export const AccountsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const isCreateFromUrl = searchParams.get("create") === "true";
+  const shouldShowForm = isFormOpen || isCreateFromUrl;
 
   const { data, isLoading, isError, refetch } = useAccounts();
-
   const createAccountMutation = useCreateAccount();
   const updateAccountMutation = useUpdateAccount();
   const setDefaultMutation = useSetDefaultAccount();
@@ -43,6 +47,10 @@ export const AccountsPage = () => {
   const closeForm = () => {
     setSelectedAccount(null);
     setIsFormOpen(false);
+
+    if (isCreateFromUrl) {
+      setSearchParams({});
+    }
   };
 
   const handleSubmit = async (payload) => {
@@ -146,7 +154,7 @@ export const AccountsPage = () => {
           <article className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm backdrop-blur">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-500">Total balance</p>
-              <BadgeIndianRupee  size={18} className="text-slate-500" />
+              <BadgeIndianRupee size={18} className="text-slate-500" />
             </div>
 
             <p className="mt-4 text-3xl font-semibold text-slate-950">
@@ -233,10 +241,10 @@ export const AccountsPage = () => {
         )}
       </div>
 
-      {isFormOpen && (
+      {shouldShowForm && (
         <AccountFormModal
           key={selectedAccount?._id || "create-account"}
-          open={isFormOpen}
+          open={shouldShowForm}
           account={selectedAccount}
           onClose={closeForm}
           onSubmit={handleSubmit}

@@ -3,6 +3,7 @@ import {
   Landmark,
   LayoutDashboard,
   LogOut,
+  PiggyBank,
   Plus,
   ReceiptText,
   WalletCards,
@@ -32,6 +33,11 @@ const navItems = [
     label: "Transactions",
     href: "/transactions",
     icon: ReceiptText,
+  },
+  {
+    label: "Budgets",
+    href: "/budgets",
+    icon: PiggyBank,
   },
 ];
 
@@ -115,7 +121,7 @@ export const AppLayout = ({ children }) => {
             </button>
 
             <Link
-              to="/transactions"
+              to="/transactions?create=true"
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-slate-950 px-3 text-sm font-medium text-white transition hover:bg-slate-800"
             >
               <Plus size={17} />

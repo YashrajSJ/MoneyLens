@@ -51,7 +51,7 @@ export const LoginPage = () => {
 
   return (
     <AuthLayout
-      title={loading ? "Signing you in..." : "Welcome back"}
+      title={loading ? "Signing you in..." : "Welcome back to MoneyLens"}
       subtitle="Login to track your accounts, budgets, transactions, receipts, and AI insights."
       backgroundImage="/login_image-4.jpg"
     >

@@ -143,7 +143,8 @@ export const TransactionFormModal = ({
               {isEditing ? "Update transaction" : "Add transaction"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Transactions update account balances only after backend validation succeeds.
+              Transactions update account balances only after backend validation
+              succeeds.
             </p>
           </div>
 
@@ -174,7 +175,9 @@ export const TransactionFormModal = ({
                 <select
                   id="transactionAccount"
                   value={form.accountId}
-                  onChange={(event) => updateField("accountId", event.target.value)}
+                  onChange={(event) =>
+                    updateField("accountId", event.target.value)
+                  }
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50"
                 >
                   <option value="">Select account</option>
@@ -218,11 +221,12 @@ export const TransactionFormModal = ({
                 </label>
                 <input
                   id="transactionAmount"
-                  type="number"
-                  min={0.01}
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={form.amount}
-                  onChange={(event) => updateField("amount", event.target.value)}
+                  onChange={(event) =>
+                    updateField("amount", event.target.value)
+                  }
                   placeholder="0"
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50"
                 />
@@ -256,7 +260,9 @@ export const TransactionFormModal = ({
                 <select
                   id="transactionCategory"
                   value={form.category}
-                  onChange={(event) => updateField("category", event.target.value)}
+                  onChange={(event) =>
+                    updateField("category", event.target.value)
+                  }
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50"
                 >
                   {categories.map((category) => (
@@ -303,7 +309,9 @@ export const TransactionFormModal = ({
                 type="text"
                 maxLength={200}
                 value={form.description}
-                onChange={(event) => updateField("description", event.target.value)}
+                onChange={(event) =>
+                  updateField("description", event.target.value)
+                }
                 placeholder="Grocery bill, salary, rent..."
                 className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50"
               />
@@ -322,7 +330,9 @@ export const TransactionFormModal = ({
                   type="text"
                   maxLength={100}
                   value={form.merchantName}
-                  onChange={(event) => updateField("merchantName", event.target.value)}
+                  onChange={(event) =>
+                    updateField("merchantName", event.target.value)
+                  }
                   placeholder="Amazon, D-Mart, employer..."
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50"
                 />
@@ -338,7 +348,9 @@ export const TransactionFormModal = ({
                 <select
                   id="transactionStatus"
                   value={form.status}
-                  onChange={(event) => updateField("status", event.target.value)}
+                  onChange={(event) =>
+                    updateField("status", event.target.value)
+                  }
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50"
                 >
                   {TRANSACTION_STATUSES.map((status) => (
