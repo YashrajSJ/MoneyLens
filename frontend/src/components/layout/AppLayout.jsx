@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Bell,
   Landmark,
   LayoutDashboard,
@@ -38,6 +39,11 @@ const navItems = [
     label: "Budgets",
     href: "/budgets",
     icon: PiggyBank,
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
   },
 ];
 

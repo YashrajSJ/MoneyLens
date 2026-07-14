@@ -9,6 +9,7 @@ import {
   BadgeIndianRupee,
   Landmark,
   ReceiptText,
+  BarChart3,
 } from "lucide-react";
 
 import { formatCurrency } from "../utils/formatters";
@@ -118,6 +119,13 @@ const quickLinks = [
     icon: <PiggyBank size={19} />,
     tone: "amber",
   },
+  {
+    title: "Analytics",
+    description: "Review trends and spending patterns",
+    href: "/analytics",
+    icon: <BarChart3 size={19} />,
+    tone: "violet",
+  },
 ];
 
 const getHelperClassName = (tone) => {
@@ -149,6 +157,10 @@ const getQuickLinkClassName = (tone) => {
     return "group-hover:border-amber-200 group-hover:bg-amber-50/60";
   }
 
+  if (tone === "violet") {
+    return "group-hover:border-violet-200 group-hover:bg-violet-50/60";
+  }
+
   return "group-hover:border-slate-300 group-hover:bg-slate-50";
 };
 
@@ -163,6 +175,10 @@ const getQuickIconClassName = (tone) => {
 
   if (tone === "amber") {
     return "bg-amber-50 text-amber-700 group-hover:bg-amber-100";
+  }
+
+  if (tone === "violet") {
+    return "bg-violet-50 text-violet-700 group-hover:bg-violet-100";
   }
 
   return "bg-slate-100 text-slate-700 group-hover:bg-slate-200";
@@ -253,7 +269,7 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {quickLinks.map((item) => (
             <Link
               key={item.title}
