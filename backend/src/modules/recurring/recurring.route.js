@@ -5,6 +5,7 @@ import { validate } from "../../middlewares/validator.middleware.js";
 
 import {
   getDueRecurringTransactions,
+  getGeneratedTransactions,
   getRecurringTransactions,
   pauseRecurringTransaction,
   processDueRecurringTransactions,
@@ -14,6 +15,7 @@ import {
 
 import {
   dueRecurringTransactionsValidator,
+  getGeneratedTransactionsValidator,
   getRecurringTransactionsValidator,
   processRecurringTransactionValidator,
   transactionIdValidator,
@@ -29,15 +31,31 @@ router
 
 router
   .route("/due")
-  .get(dueRecurringTransactionsValidator(), validate, getDueRecurringTransactions);
+  .get(
+    dueRecurringTransactionsValidator(),
+    validate,
+    getDueRecurringTransactions,
+  );
 
 router
   .route("/process-due")
-  .post(dueRecurringTransactionsValidator(), validate, processDueRecurringTransactions);
+  .post(
+    dueRecurringTransactionsValidator(),
+    validate,
+    processDueRecurringTransactions,
+  );
+
+router
+  .route("/:transactionId/generated-transactions")
+  .get(getGeneratedTransactionsValidator(), validate, getGeneratedTransactions);
 
 router
   .route("/:transactionId/process")
-  .post(processRecurringTransactionValidator(), validate, processRecurringTransaction);
+  .post(
+    processRecurringTransactionValidator(),
+    validate,
+    processRecurringTransaction,
+  );
 
 router
   .route("/:transactionId/pause")

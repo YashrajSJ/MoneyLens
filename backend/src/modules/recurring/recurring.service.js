@@ -93,6 +93,59 @@ const getRecurringTransactionsService = async ({ userId, query }) => {
   };
 };
 
+const getGeneratedTransactionsService = async ({
+  userId,
+  transactionId,
+  query,
+}) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || DEFAULT_RECURRING_LIST_LIMIT;
+  const skip = (page - 1) * limit;
+
+  const recurringTemplate = await Transaction.findOne({
+    _id: transactionId,
+    userId,
+    isRecurring: true,
+  })
+    .select(
+      "_id accountId type amount description category date status recurringInterval recurringStatus nextRecurringDate lastProcessedAt",
+    )
+    .populate("accountId", "name type color balance")
+    .lean();
+
+  if (!recurringTemplate) {
+    throw new ApiError(404, "Recurring transaction not found");
+  }
+
+  const filter = {
+    userId,
+    recurringParentId: transactionId,
+    isRecurring: false,
+  };
+
+  const [transactions, total] = await Promise.all([
+    Transaction.find(filter)
+      .populate("accountId", "name type color balance")
+      .sort({ date: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+
+    Transaction.countDocuments(filter),
+  ]);
+
+  return {
+    recurringTemplate,
+    transactions,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 const getDueRecurringTransactionsService = async ({ userId, query }) => {
   const asOf = query.asOf ? new Date(query.asOf) : new Date();
 
@@ -430,6 +483,7 @@ const resumeRecurringTransactionService = async ({ userId, transactionId }) => {
 
 export {
   getRecurringTransactionsService,
+  getGeneratedTransactionsService,
   getDueRecurringTransactionsService,
   processRecurringTransactionService,
   processDueRecurringTransactionsService,

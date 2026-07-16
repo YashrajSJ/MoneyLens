@@ -8,6 +8,7 @@ import {
   Plus,
   ReceiptText,
   WalletCards,
+  Repeat2,
   Sparkles,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
@@ -44,6 +45,11 @@ const navItems = [
     label: "Analytics",
     href: "/analytics",
     icon: BarChart3,
+  },
+  {
+    label: "Recurring",
+    href: "/recurring",
+    icon: Repeat2,
   },
 ];
 

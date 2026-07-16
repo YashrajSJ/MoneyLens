@@ -6,6 +6,7 @@ import { logger } from "../../utils/logger.js";
 
 import {
   getDueRecurringTransactionsService,
+  getGeneratedTransactionsService,
   getRecurringTransactionsService,
   pauseRecurringTransactionService,
   processDueRecurringTransactionsService,
@@ -14,20 +15,38 @@ import {
 } from "./recurring.service.js";
 
 const getRecurringTransactions = asyncHandler(async (req, res) => {
-  
   const result = await getRecurringTransactionsService({
-  userId: req.user._id,
-  query: req.query,
+    userId: req.user._id,
+    query: req.query,
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        "Recurring transactions fetched successfully",
+      ),
+    );
 });
 
-return res.status(200).json(
-  new ApiResponse(
-    200,
-    result,
-    "Recurring transactions fetched successfully"
-  )
-);
+const getGeneratedTransactions = asyncHandler(async (req, res) => {
+  const result = await getGeneratedTransactionsService({
+    userId: req.user._id,
+    transactionId: req.params.transactionId,
+    query: req.query,
+  });
 
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        "Generated transactions fetched successfully",
+      ),
+    );
 });
 
 const getDueRecurringTransactions = asyncHandler(async (req, res) => {
@@ -36,13 +55,15 @@ const getDueRecurringTransactions = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { transactions },
-      "Due recurring transactions fetched successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { transactions },
+        "Due recurring transactions fetched successfully",
+      ),
+    );
 });
 
 const processRecurringTransaction = asyncHandler(async (req, res) => {
@@ -62,16 +83,18 @@ const processRecurringTransaction = asyncHandler(async (req, res) => {
       recurringTransactionId: req.params.transactionId,
       generatedTransactionId: result.generatedTransaction._id,
     },
-    "Single recurring transaction processed"
+    "Single recurring transaction processed",
   );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      result,
-      "Recurring transaction processed successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        "Recurring transaction processed successfully",
+      ),
+    );
 });
 
 const processDueRecurringTransactions = asyncHandler(async (req, res) => {
@@ -90,16 +113,18 @@ const processDueRecurringTransactions = asyncHandler(async (req, res) => {
       processedCount: result.processedCount,
       failedCount: result.failedCount,
     },
-    "Due recurring transactions processed"
+    "Due recurring transactions processed",
   );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      result,
-      "Due recurring transactions processed successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        "Due recurring transactions processed successfully",
+      ),
+    );
 });
 
 const pauseRecurringTransaction = asyncHandler(async (req, res) => {
@@ -113,16 +138,18 @@ const pauseRecurringTransaction = asyncHandler(async (req, res) => {
       userId: req.user._id,
       recurringTransactionId: transaction._id,
     },
-    "Recurring transaction paused"
+    "Recurring transaction paused",
   );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { transaction },
-      "Recurring transaction paused successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { transaction },
+        "Recurring transaction paused successfully",
+      ),
+    );
 });
 
 const resumeRecurringTransaction = asyncHandler(async (req, res) => {
@@ -136,20 +163,23 @@ const resumeRecurringTransaction = asyncHandler(async (req, res) => {
       userId: req.user._id,
       recurringTransactionId: transaction._id,
     },
-    "Recurring transaction resumed"
+    "Recurring transaction resumed",
   );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { transaction },
-      "Recurring transaction resumed successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { transaction },
+        "Recurring transaction resumed successfully",
+      ),
+    );
 });
 
 export {
   getRecurringTransactions,
+  getGeneratedTransactions,
   getDueRecurringTransactions,
   processRecurringTransaction,
   processDueRecurringTransactions,

@@ -15,6 +15,11 @@ export const queryKeys = {
 
   recurring: (filters = {}) => ["recurring", filters],
   dueRecurring: (filters = {}) => ["dueRecurring", filters],
+  generatedRecurringTransactions: (transactionId, filters = {}) => [
+    "generatedRecurringTransactions",
+    transactionId,
+    filters,
+  ],
 
   receipts: (filters = {}) => ["receipts", filters],
   receipt: (receiptId) => ["receipt", receiptId],

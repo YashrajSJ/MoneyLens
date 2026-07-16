@@ -32,6 +32,22 @@ const getRecurringTransactionsValidator = () => [
     .toInt(),
 ];
 
+const getGeneratedTransactionsValidator = () => [
+  ...transactionIdValidator(),
+
+  query("page")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Page must be at least 1")
+    .toInt(),
+
+  query("limit")
+    .optional()
+    .isInt({ min: 1, max: MAX_RECURRING_LIST_LIMIT })
+    .withMessage(`Limit must be between 1 and ${MAX_RECURRING_LIST_LIMIT}`)
+    .toInt(),
+];
+
 const dueRecurringTransactionsValidator = () => [
   query("asOf")
     .optional()
@@ -59,6 +75,7 @@ const processRecurringTransactionValidator = () => [
 export {
   transactionIdValidator,
   getRecurringTransactionsValidator,
+  getGeneratedTransactionsValidator,
   dueRecurringTransactionsValidator,
   processRecurringTransactionValidator,
 };

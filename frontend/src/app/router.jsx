@@ -14,6 +14,7 @@ import { VerifyEmailPage } from "../pages/VerifyEmailPage.jsx";
 import { TransactionsPage } from "../pages/TransactionsPage.jsx";
 import { BudgetsPage } from "../pages/BudgetsPage.jsx";
 import { AnalyticsPage } from "../pages/AnalyticsPage.jsx";
+import { RecurringPage } from "../pages/RecurringPage.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { data: user, isLoading } = useCurrentUser();
@@ -129,6 +130,17 @@ export const AppRouter = () => {
           <ProtectedRoute>
             <AppLayout>
               <AnalyticsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/recurring"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <RecurringPage />
             </AppLayout>
           </ProtectedRoute>
         }
