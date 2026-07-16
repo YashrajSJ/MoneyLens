@@ -11,6 +11,7 @@ import {
   Repeat2,
   Sparkles,
 } from "lucide-react";
+
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -50,6 +51,11 @@ const navItems = [
     label: "Recurring",
     href: "/recurring",
     icon: Repeat2,
+  },
+  {
+    label: "Receipts",
+    href: "/receipts",
+    icon: ReceiptText,
   },
 ];
 
@@ -119,8 +125,8 @@ export const AppLayout = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Link
+              to="/receipts"
               className="group relative hidden h-10 items-center overflow-hidden rounded-xl bg-linear-to-r from-rose-200 via-amber-200 to-emerald-200 p-px shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:inline-flex"
             >
               <span className="inline-flex h-full items-center gap-2 rounded-[11px] bg-white px-3.5 text-sm font-medium text-slate-800 transition group-hover:bg-slate-50">
@@ -130,7 +136,7 @@ export const AppLayout = ({ children }) => {
                 />
                 Scan Receipt
               </span>
-            </button>
+            </Link>
 
             <Link
               to="/transactions?create=true"

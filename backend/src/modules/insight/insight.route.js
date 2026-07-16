@@ -25,7 +25,7 @@ import { aiRateLimiter } from "../../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
-router.use(verifyJWT);
+router.use(verifyJWT);  
 
 router
   .route("/generate")

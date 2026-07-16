@@ -15,6 +15,7 @@ import { TransactionsPage } from "../pages/TransactionsPage.jsx";
 import { BudgetsPage } from "../pages/BudgetsPage.jsx";
 import { AnalyticsPage } from "../pages/AnalyticsPage.jsx";
 import { RecurringPage } from "../pages/RecurringPage.jsx";
+import { ReceiptsPage } from "../pages/ReceiptsPage.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { data: user, isLoading } = useCurrentUser();
@@ -141,6 +142,17 @@ export const AppRouter = () => {
           <ProtectedRoute>
             <AppLayout>
               <RecurringPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/receipts"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ReceiptsPage />
             </AppLayout>
           </ProtectedRoute>
         }
