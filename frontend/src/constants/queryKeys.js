@@ -25,6 +25,7 @@ export const queryKeys = {
   receipt: (receiptId) => ["receipt", receiptId],
 
   insights: (filters = {}) => ["insights", filters],
+  monthlyInsightSummary: (filters = {}) => ["monthlyInsightSummary", filters],
 
   notifications: (filters = {}) => ["notifications", filters],
   unreadNotifications: ["unreadNotifications"],

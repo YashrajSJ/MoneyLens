@@ -496,7 +496,7 @@ const getInsightsService = async ({ userId, query }) => {
   }
 
   if (query.isRead !== undefined) {
-    filter.isRead = query.isRead;
+    filter.isRead = query.isRead === true || query.isRead === "true";
   }
 
   const [insights, total] = await Promise.all([

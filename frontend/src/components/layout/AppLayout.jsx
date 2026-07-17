@@ -10,6 +10,7 @@ import {
   WalletCards,
   Repeat2,
   Sparkles,
+  BrainCircuit,
 } from "lucide-react";
 
 import { Link, NavLink, useNavigate } from "react-router-dom";
@@ -56,6 +57,11 @@ const navItems = [
     label: "Receipts",
     href: "/receipts",
     icon: ReceiptText,
+  },
+  {
+    label: "Insights",
+    href: "/insights",
+    icon: BrainCircuit,
   },
 ];
 
