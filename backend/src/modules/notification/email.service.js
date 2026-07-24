@@ -15,7 +15,7 @@ const queueEmailDeliveryService = async ({
   text,
   type,
   metadata = {},
-  dedupeKey,
+  uniqueEmailKey,
 }) => {
   const emailLog = await EmailLog.create({
     userId,
@@ -35,7 +35,7 @@ const queueEmailDeliveryService = async ({
       html,
       text,
       type,
-      dedupeKey,
+      uniqueEmailKey,
     });
 
     emailLog.jobId = job.id;

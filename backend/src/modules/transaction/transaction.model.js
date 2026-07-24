@@ -71,6 +71,11 @@ const transactionSchema = new Schema(
 
     receiptUrl: String,
 
+    receiptId: {
+      type: Schema.Types.ObjectId,
+      ref: "Receipt",
+    },
+
     isRecurring: {
       type: Boolean,
       default: false,
@@ -118,9 +123,14 @@ transactionSchema.index({ description: "text", merchantName: "text" });
 
 transactionSchema.index({ userId: 1, status: 1, date: -1 });
 
+transactionSchema.index({
+  userId: 1,
+  isRecurring: 1,
+  recurringStatus: 1,
+  nextRecurringDate: 1,
+});
 
-transactionSchema.index({userId: 1,isRecurring: 1, recurringStatus: 1,nextRecurringDate: 1,});
-
-transactionSchema.index({ recurringParentId: 1,date: -1,});
+transactionSchema.index({ recurringParentId: 1, date: -1 });
+transactionSchema.index({ receiptId: 1 });
 
 export const Transaction = mongoose.model("Transaction", transactionSchema);

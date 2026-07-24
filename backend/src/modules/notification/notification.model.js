@@ -37,7 +37,7 @@ const notificationSchema = new Schema(
       default: () => ({}),
     },
 
-    dedupeKey: {
+    uniqueEmailKey: {
       type: String,
       trim: true,
     },
@@ -62,11 +62,11 @@ notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
 notificationSchema.index({ userId: 1, type: 1, createdAt: -1 });
 
 notificationSchema.index(
-  { userId: 1, dedupeKey: 1 },
+  { userId: 1, uniqueEmailKey: 1 },
   {
     unique: true,
     partialFilterExpression: {
-      dedupeKey: { $type: "string" },
+      uniqueEmailKey: { $type: "string" },
     },
   },
 );

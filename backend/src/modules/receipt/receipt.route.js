@@ -9,6 +9,7 @@ import {
   getReceipts,
   scanReceipt,
   prepareTransactionFromReceipt,
+  confirmReceiptTransaction,
   retryReceiptParsing,
 } from "./receipt.controller.js";
 
@@ -18,6 +19,7 @@ import {
   getReceiptsValidator,
   receiptIdValidator,
   prepareTransactionValidator,
+  confirmReceiptTransactionValidator,
 } from "./receipt.validator.js";
 
 import { aiRateLimiter } from "../../middlewares/rateLimit.middleware.js";
@@ -42,6 +44,16 @@ router
     resolveReceipt,
     prepareTransactionFromReceipt,
   );
+
+router
+  .route("/:receiptId/confirm-transaction")
+  .post(
+    confirmReceiptTransactionValidator(),
+    validate,
+    resolveReceipt,
+    confirmReceiptTransaction,
+  );
+
 
 router
   .route("/:receiptId")

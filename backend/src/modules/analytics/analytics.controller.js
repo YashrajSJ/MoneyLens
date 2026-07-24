@@ -10,13 +10,10 @@ import {
   getSummaryService,
   getTopMerchantsService,
   getBudgetProgressService,
+  getFinancialHealthScoreService,
 } from "./analytics.service.js";
 
-import {
-  buildCacheKey,
-  getCache,
-  setCache,
-} from "../../utils/cache.js";
+import { buildCacheKey, getCache, setCache } from "../../utils/cache.js";
 
 import { CACHE_TTL_SECONDS } from "../security/security.constants.js";
 
@@ -37,8 +34,8 @@ const getDashboardAnalytics = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           cachedDashboard,
-          "Dashboard analytics fetched from cache"
-        )
+          "Dashboard analytics fetched from cache",
+        ),
       );
   }
 
@@ -47,11 +44,7 @@ const getDashboardAnalytics = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  await setCache(
-    cacheKey,
-    dashboard,
-    CACHE_TTL_SECONDS.DASHBOARD_ANALYTICS
-  );
+  await setCache(cacheKey, dashboard, CACHE_TTL_SECONDS.DASHBOARD_ANALYTICS);
 
   return res
     .status(200)
@@ -59,15 +52,15 @@ const getDashboardAnalytics = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         dashboard,
-        "Dashboard analytics fetched successfully"
-      )
+        "Dashboard analytics fetched successfully",
+      ),
     );
 });
 
 const getSummary = asyncHandler(async (req, res) => {
   const summary = await getSummaryService({
     userId: req.user._id,
-    query: req.query,    
+    query: req.query,
   });
 
   return res
@@ -81,13 +74,15 @@ const getCategoryBreakdown = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { categories },
-      "Category breakdown fetched successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { categories },
+        "Category breakdown fetched successfully",
+      ),
+    );
 });
 
 const getMonthlyTrend = asyncHandler(async (req, res) => {
@@ -96,9 +91,11 @@ const getMonthlyTrend = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, { trends }, "Monthly trends fetched successfully")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, { trends }, "Monthly trends fetched successfully"),
+    );
 });
 
 const getTopMerchants = asyncHandler(async (req, res) => {
@@ -107,9 +104,11 @@ const getTopMerchants = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, { merchants }, "Top merchants fetched successfully")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, { merchants }, "Top merchants fetched successfully"),
+    );
 });
 
 const getAccountSummary = asyncHandler(async (req, res) => {
@@ -118,13 +117,15 @@ const getAccountSummary = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { accounts },
-      "Account summary fetched successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { accounts },
+        "Account summary fetched successfully",
+      ),
+    );
 });
 
 const getRecentTransactions = asyncHandler(async (req, res) => {
@@ -133,13 +134,15 @@ const getRecentTransactions = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { transactions },
-      "Recent transactions fetched successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { transactions },
+        "Recent transactions fetched successfully",
+      ),
+    );
 });
 
 const getBudgetProgress = asyncHandler(async (req, res) => {
@@ -148,13 +151,26 @@ const getBudgetProgress = asyncHandler(async (req, res) => {
     query: req.query,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      result,
-      "Budget progress fetched successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Budget progress fetched successfully"));
+});
+
+const getFinancialHealthScore = asyncHandler(async (req, res) => {
+  const healthScore = await getFinancialHealthScoreService({
+    userId: req.user._id,
+    query: req.query,
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { healthScore },
+        "Financial health score fetched successfully",
+      ),
+    );
 });
 
 export {
@@ -165,5 +181,6 @@ export {
   getTopMerchants,
   getAccountSummary,
   getRecentTransactions,
-  getBudgetProgress
+  getBudgetProgress,
+  getFinancialHealthScore,
 };

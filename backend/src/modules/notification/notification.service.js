@@ -100,7 +100,7 @@ const createNotificationService = async ({
   title,
   message,
   metadata = {},
-  dedupeKey,
+  uniqueEmailKey,
 }) => {
   try {
     const notification = await Notification.create({
@@ -109,7 +109,7 @@ const createNotificationService = async ({
       title,
       message,
       metadata,
-      dedupeKey,
+      uniqueEmailKey,
     });
 
     return {
@@ -117,10 +117,10 @@ const createNotificationService = async ({
       created: true,
     };
   } catch (error) {
-    if (error.code === 11000 && dedupeKey) {
+    if (error.code === 11000 && uniqueEmailKey) {
       const existingNotification = await Notification.findOne({
         userId,
-        dedupeKey,
+        uniqueEmailKey,
       }).lean();
 
       return {
@@ -141,8 +141,8 @@ const getNotificationsService = async ({ userId, query }) => {
   };
 
   if (query.isRead !== undefined) {
-  filter.isRead = query.isRead === true || query.isRead === "true";
-}
+    filter.isRead = query.isRead === true || query.isRead === "true";
+  }
 
   if (query.type) {
     filter.type = query.type;
@@ -316,7 +316,7 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
     throw new ApiError(400, "Monthly report emails are disabled");
   }
 
-  const dedupeKey = `monthly-report:${user._id}:${year}:${month}`;
+  const uniqueEmailKey = `monthly-report:${user._id}:${year}:${month}`;
 
   const { from, to } = buildMonthRange({ month, year });
 
@@ -345,7 +345,7 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
       type: NOTIFICATION_TYPES.MONTHLY_REPORT,
       title: `Monthly report for ${month}/${year}`,
       message: "Your monthly financial report has been prepared.",
-      dedupeKey,
+      uniqueEmailKey,
       metadata: {
         month,
         year,
@@ -365,7 +365,7 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
       html: template.html,
       text: template.text,
       type: EMAIL_TYPES.MONTHLY_REPORT,
-      dedupeKey,
+      uniqueEmailKey,
       metadata: {
         notificationId: notification._id,
         month,
@@ -391,13 +391,13 @@ const queueMonthlyReportEmailService = async ({ user, month, year }) => {
       email,
       dashboard,
     };
- } catch (error) {
-  if (notification?._id && error.statusCode !== 409) {
-    await Notification.deleteOne({ _id: notification._id }).catch(() => {});
-  }
+  } catch (error) {
+    if (notification?._id && error.statusCode !== 409) {
+      await Notification.deleteOne({ _id: notification._id }).catch(() => {});
+    }
 
-  throw error;
-}
+    throw error;
+  }
 };
 
 const createBudgetAlertNotificationService = async ({
@@ -412,14 +412,14 @@ const createBudgetAlertNotificationService = async ({
   month,
   year,
 }) => {
-  const dedupeKey = `budget-alert:${budgetId}:${year}:${month}:threshold:${threshold}`;
+  const uniqueEmailKey = `budget-alert:${budgetId}:${year}:${month}:threshold:${threshold}`;
 
   const { notification, created } = await createNotificationService({
     userId,
     type: NOTIFICATION_TYPES.BUDGET_ALERT,
     title: "Budget alert",
     message: `Your budget crossed ${threshold}% usage.`,
-    dedupeKey,
+    uniqueEmailKey,
     metadata: {
       budgetId,
       accountId,
@@ -478,7 +478,7 @@ const createBudgetAlertNotificationService = async ({
     html: template.html,
     text: template.text,
     type: EMAIL_TYPES.BUDGET_ALERT,
-    dedupeKey,
+    uniqueEmailKey,
     metadata: {
       notificationId: notification._id,
       budgetId,

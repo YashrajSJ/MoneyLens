@@ -321,7 +321,7 @@ const generateInsightsWithAI = async ({ context }) => {
   const genAI = new GoogleGenerativeAI(process.env.AI_API_KEY);
 
   const model = genAI.getGenerativeModel({
-    model: process.env.AI_MODEL || "gemini-1.5-flash",
+    model: process.env.AI_MODEL || "Gemini 3.1 Flash Lite",
   });
 
   const prompt = `

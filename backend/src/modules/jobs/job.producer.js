@@ -4,7 +4,12 @@ import {
   RECURRING_SCHEDULER_PATTERNS,
 } from "./job.constants.js";
 
-import { emailQueue,insightQueue,receiptQueue,recurringQueue} from "./job.queue.js";
+import {
+  emailQueue,
+  insightQueue,
+  receiptQueue,
+  recurringQueue,
+} from "./job.queue.js";
 
 const enqueueRecurringProcessingJob = async ({ userId, asOf, limit }) => {
   const safeAsOf = asOf ?? new Date().toISOString();
@@ -19,7 +24,7 @@ const enqueueRecurringProcessingJob = async ({ userId, asOf, limit }) => {
     },
     {
       jobId: `recurring:${userId}:${safeAsOf}`,
-    }
+    },
   );
 };
 
@@ -33,7 +38,7 @@ const enqueueInsightGenerationJob = async ({ userId, month, year }) => {
     },
     {
       jobId: `insights:${userId}:${year}:${month}`,
-    }
+    },
   );
 };
 
@@ -56,11 +61,9 @@ const enqueueReceiptParsingJob = async ({
         source === "RETRY"
           ? `receipt-parse:${receiptId}:retry:${timestamp}`
           : `receipt-parse:${receiptId}`,
-    }
+    },
   );
 };
-
-
 
 const enqueueEmailJob = async ({
   userId,
@@ -70,12 +73,12 @@ const enqueueEmailJob = async ({
   html,
   text,
   type,
-  dedupeKey,
+  uniqueEmailKey,
 }) => {
   const options = {};
 
-  if (dedupeKey) {
-    options.jobId = `email:${dedupeKey}`;
+  if (uniqueEmailKey) {
+    options.jobId = `email:${uniqueEmailKey}`;
   }
 
   return await emailQueue.add(
@@ -89,7 +92,7 @@ const enqueueEmailJob = async ({
       text,
       type,
     },
-    options
+    options,
   );
 };
 
@@ -118,7 +121,7 @@ const upsertUserRecurringScheduler = async ({
           delay: 5000,
         },
       },
-    }
+    },
   );
 };
 

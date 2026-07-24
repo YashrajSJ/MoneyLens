@@ -11,7 +11,8 @@ import {
   getRecentTransactions,
   getSummary,
   getTopMerchants,
-  getBudgetProgress
+  getBudgetProgress,
+  getFinancialHealthScore,
 } from "./analytics.controller.js";
 
 import {
@@ -22,7 +23,8 @@ import {
   recentTransactionsValidator,
   summaryValidator,
   topMerchantsValidator,
-  budgetProgressValidator
+  budgetProgressValidator,
+  financialHealthScoreValidator,
 } from "./analytics.validator.js";
 
 const router = Router();
@@ -33,9 +35,7 @@ router
   .route("/dashboard")
   .get(dashboardAnalyticsValidator(), validate, getDashboardAnalytics);
 
-router
-  .route("/summary")
-  .get(summaryValidator(), validate, getSummary);
+router.route("/summary").get(summaryValidator(), validate, getSummary);
 
 router
   .route("/category-breakdown")
@@ -61,4 +61,7 @@ router
   .route("/budget-progress")
   .get(budgetProgressValidator(), validate, getBudgetProgress);
 
+router
+  .route("/health-score")
+  .get(financialHealthScoreValidator(), validate, getFinancialHealthScore);
 export default router;

@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import "./config/loadEnv.js";
 import { validateEnv } from "./utils/validateEnv.js";
 import { logger } from "./utils/logger.js";
 

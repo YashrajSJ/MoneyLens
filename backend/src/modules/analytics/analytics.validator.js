@@ -7,15 +7,9 @@ import {
 } from "./analytics.constants.js";
 
 const dateRangeValidator = () => [
-  query("from")
-    .optional()
-    .isISO8601()
-    .withMessage("Invalid from date"),
+  query("from").optional().isISO8601().withMessage("Invalid from date"),
 
-  query("to")
-    .optional()
-    .isISO8601()
-    .withMessage("Invalid to date"),
+  query("to").optional().isISO8601().withMessage("Invalid to date"),
 
   query("to").custom((to, { req }) => {
     if (req.query.from && to) {
@@ -32,10 +26,7 @@ const dateRangeValidator = () => [
 ];
 
 const accountIdQueryValidator = () => [
-  query("accountId")
-    .optional()
-    .isMongoId()
-    .withMessage("Invalid account id"),
+  query("accountId").optional().isMongoId().withMessage("Invalid account id"),
 ];
 
 const dashboardAnalyticsValidator = () => [
@@ -74,9 +65,7 @@ const topMerchantsValidator = () => [
     .toInt(),
 ];
 
-const accountSummaryValidator = () => [
-  ...dateRangeValidator(),
-];
+const accountSummaryValidator = () => [...dateRangeValidator()];
 
 const recentTransactionsValidator = () => [
   ...accountIdQueryValidator(),
@@ -84,9 +73,7 @@ const recentTransactionsValidator = () => [
   query("limit")
     .optional()
     .isInt({ min: 1, max: MAX_RECENT_TRANSACTION_LIMIT })
-    .withMessage(
-      `Limit must be between 1 and ${MAX_RECENT_TRANSACTION_LIMIT}`
-    )
+    .withMessage(`Limit must be between 1 and ${MAX_RECENT_TRANSACTION_LIMIT}`)
     .toInt(),
 ];
 
@@ -106,6 +93,22 @@ const budgetProgressValidator = () => [
     .toInt(),
 ];
 
+const financialHealthScoreValidator = () => [
+  ...accountIdQueryValidator(),
+
+  query("month")
+    .optional()
+    .isInt({ min: 1, max: 12 })
+    .withMessage("Month must be between 1 and 12")
+    .toInt(),
+
+  query("year")
+    .optional()
+    .isInt({ min: 2000, max: 2100 })
+    .withMessage("Invalid year")
+    .toInt(),
+];
+
 export {
   dashboardAnalyticsValidator,
   summaryValidator,
@@ -114,5 +117,6 @@ export {
   topMerchantsValidator,
   accountSummaryValidator,
   recentTransactionsValidator,
-  budgetProgressValidator
+  budgetProgressValidator,
+  financialHealthScoreValidator,
 };

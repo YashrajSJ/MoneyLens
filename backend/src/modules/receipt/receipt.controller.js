@@ -8,7 +8,8 @@ import {
   getReceiptsService,
   scanReceiptService,
   prepareTransactionFromReceiptService,
-  retryReceiptParsingService
+  confirmReceiptTransactionService,
+  retryReceiptParsingService,
 } from "./receipt.service.js";
 
 const scanReceipt = asyncHandler(async (req, res) => {
@@ -23,8 +24,8 @@ const scanReceipt = asyncHandler(async (req, res) => {
       new ApiResponse(
         202,
         result,
-        "Receipt uploaded and parsing job queued successfully"
-      )
+        "Receipt uploaded and parsing job queued successfully",
+      ),
     );
 });
 
@@ -71,7 +72,7 @@ const deleteReceipt = asyncHandler(async (req, res) => {
       userId: req.user._id,
       receiptId: req.receipt._id,
     },
-    "Receipt deleted"
+    "Receipt deleted",
   );
 
   return res
@@ -86,13 +87,46 @@ const prepareTransactionFromReceipt = asyncHandler(async (req, res) => {
     accountId: req.query.accountId,
   });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      result,
-      "Transaction draft prepared successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, result, "Transaction draft prepared successfully"),
+    );
 });
 
-export { scanReceipt, getReceipts, getReceiptById, deleteReceipt, prepareTransactionFromReceipt , retryReceiptParsing};
+const confirmReceiptTransaction = asyncHandler(async (req, res) => {
+  const result = await confirmReceiptTransactionService({
+    userId: req.user._id,
+    receipt: req.receipt,
+    payload: req.body,
+  });
+
+  logger.info(
+    {
+      userId: req.user._id,
+      receiptId: req.receipt._id,
+      transactionId: result.transaction._id,
+    },
+    "Receipt transaction confirmed",
+  );
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        result,
+        "Receipt transaction confirmed successfully",
+      ),
+    );
+});
+
+export {
+  scanReceipt,
+  getReceipts,
+  getReceiptById,
+  deleteReceipt,
+  prepareTransactionFromReceipt,
+  confirmReceiptTransaction,
+  retryReceiptParsing,
+};

@@ -8,6 +8,11 @@ import {
   ALL_CATEGORIES,
   PAYMENT_METHODS,
 } from "../transaction/transaction.constants.js";
+
+import { createTransactionWithSession } from "../transaction/transaction.service.js";
+import { withTransaction } from "../../utils/withTransaction.js";
+import { deleteUserAnalyticsCache } from "../../utils/cache.js";
+
 import { enqueueReceiptParsingJob } from "../jobs/job.producer.js";
 
 import { Receipt } from "./receipt.model.js";
@@ -129,7 +134,7 @@ const extractReceiptDataWithAI = async ({ imageUrl, mimeType }) => {
 
   const genAI = new GoogleGenerativeAI(process.env.AI_API_KEY);
   const model = genAI.getGenerativeModel({
-    model: process.env.AI_MODEL || "gemini-1.5-flash",
+    model: process.env.AI_MODEL || "gemini-3.1-flash-lite",
   });
 
   const prompt = `
@@ -501,6 +506,91 @@ const prepareTransactionFromReceiptService = async ({
   };
 };
 
+const confirmReceiptTransactionService = async ({
+  userId,
+  receipt,
+  payload,
+}) => {
+  if (String(receipt.userId) !== String(userId)) {
+    throw new ApiError(403, "You are not allowed to access this receipt");
+  }
+
+  if (receipt.status !== RECEIPT_STATUSES.PARSED) {
+    throw new ApiError(400, "Receipt is not parsed yet");
+  }
+
+  if (receipt.transactionId) {
+    throw new ApiError(409, "Receipt is already linked to a transaction");
+  }
+
+  const transaction = await withTransaction(async (session) => {
+    const lockedReceipt = await Receipt.findOneAndUpdate(
+      {
+        _id: receipt._id,
+        userId,
+        status: RECEIPT_STATUSES.PARSED,
+        $or: [{ transactionId: { $exists: false } }, { transactionId: null }],
+      },
+      {
+        $set: {
+          transactionId: null,
+        },
+      },
+      {
+        new: true,
+        session,
+      },
+    );
+
+    if (!lockedReceipt) {
+      throw new ApiError(409, "Receipt is already linked to a transaction");
+    }
+
+    const createdTransaction = await createTransactionWithSession({
+      userId,
+      payload: {
+        accountId: payload.accountId,
+        type: payload.type,
+        amount: payload.amount,
+        description:
+          payload.description ||
+          lockedReceipt.extractedData?.description ||
+          lockedReceipt.extractedData?.merchantName ||
+          "Receipt transaction",
+        category: payload.category,
+        date: payload.date,
+        paymentMethod: payload.paymentMethod || "OTHER",
+        merchantName:
+          payload.merchantName ||
+          lockedReceipt.extractedData?.merchantName ||
+          "",
+        receiptUrl: lockedReceipt.imageUrl,
+        receiptId: lockedReceipt._id,
+        status: "COMPLETED",
+        isRecurring: false,
+      },
+      session,
+    });
+
+    lockedReceipt.transactionId = createdTransaction._id;
+    await lockedReceipt.save({ session });
+
+    return createdTransaction;
+  }, "confirmReceiptTransaction failed");
+
+  await deleteUserAnalyticsCache(userId);
+
+  const updatedReceipt = await Receipt.findOne({
+    _id: receipt._id,
+    userId,
+  }).lean();
+
+  return {
+    receipt: updatedReceipt,
+    transaction,
+  };
+};
+
 const deleteReceiptService = async ({ userId, receipt }) => {
   if (receipt.status === RECEIPT_STATUSES.PROCESSING) {
     throw new ApiError(
@@ -545,5 +635,6 @@ export {
   getReceiptsService,
   getReceiptByIdService,
   prepareTransactionFromReceiptService,
+  confirmReceiptTransactionService,
   deleteReceiptService,
 };
