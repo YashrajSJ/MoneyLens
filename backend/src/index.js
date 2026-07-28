@@ -1,4 +1,4 @@
-import "./config/loadEnv.js";
+import  "./config/loadEnv.js";
 import { validateEnv } from "./utils/validateEnv.js";
 import { logger } from "./utils/logger.js";
 
@@ -6,9 +6,7 @@ import { closeRedisConnection } from "./db/redis.js";
 import { closeJobQueues } from "./modules/jobs/job.queue.js";
 import { startJobWorkers, stopJobWorkers } from "./modules/jobs/job.worker.js";
 
-dotenv.config({
-  path: "./.env",
-});
+
 
 validateEnv();
 

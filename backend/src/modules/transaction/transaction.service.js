@@ -406,6 +406,7 @@ const bulkDeleteTransactionsService = async ({ userId, transactionIds }) => {
 };
 
 export {
+  getBalanceEffect,
   createTransactionService,
   createTransactionWithSession,
   getTransactionsService,
