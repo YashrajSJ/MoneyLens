@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { authApi } from "../../features/auth/api/authApi";
 import { useCurrentUser } from "../../features/auth/hooks/useCurrentUser";
+import { useUnreadNotificationCount } from "../../features/notifications/hooks/useNotifications";
 
 import { BgGradient } from "./BgGradient";
 
@@ -63,12 +64,20 @@ const navItems = [
     href: "/insights",
     icon: BrainCircuit,
   },
+  {
+    label: "Notifications",
+    href: "/notifications",
+    icon: Bell,
+  },
 ];
 
 export const AppLayout = ({ children }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
+
+  const { data: unreadData } = useUnreadNotificationCount();
+  const unreadCount = unreadData?.unreadCount || 0;
 
   const firstName =
     user?.fullName?.trim()?.split(" ")[0] || user?.username || "User";
@@ -156,14 +165,23 @@ export const AppLayout = ({ children }) => {
               {firstName}
             </div>
 
-            <button
-              type="button"
+            <Link
+              to="/notifications"
               className="relative rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50"
-              aria-label="Notifications"
+              aria-label={
+                unreadCount > 0
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
             >
               <Bell size={20} />
-              <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-emerald-500" />
-            </button>
+
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
 
             <button
               type="button"

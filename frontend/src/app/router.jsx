@@ -17,6 +17,7 @@ import { AnalyticsPage } from "../pages/AnalyticsPage.jsx";
 import { RecurringPage } from "../pages/RecurringPage.jsx";
 import { ReceiptsPage } from "../pages/ReceiptsPage.jsx";
 import { InsightsPage } from "../pages/InsightsPage.jsx";
+import { NotificationsPage } from "../pages/NotificationsPage.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { data: user, isLoading } = useCurrentUser();
@@ -165,6 +166,17 @@ export const AppRouter = () => {
           <ProtectedRoute>
             <AppLayout>
               <InsightsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <NotificationsPage />
             </AppLayout>
           </ProtectedRoute>
         }
