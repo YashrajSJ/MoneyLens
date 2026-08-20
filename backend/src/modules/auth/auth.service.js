@@ -9,6 +9,7 @@ import {
   generateEmailVerificationTemplate,
   generatePasswordResetTemplate,
 } from "../notification/email.template.js";
+
 import { EMAIL_TYPES } from "../notification/notification.constants.js";
 
 import { User } from "./user.model.js";
@@ -209,12 +210,7 @@ const forgotPasswordService = async ({ body }) => {
     PASSWORD_RESET_TOKEN_EXPIRY_SECONDS,
   );
 
-  await redisConnection.set(
-    userResetKey,
-    hashedToken,
-    "EX",
-    PASSWORD_RESET_TOKEN_EXPIRY_SECONDS,
-  );
+
 
   const resetUrl = getFrontendResetPasswordUrl(resetToken);
 
@@ -352,7 +348,7 @@ const refreshAccessTokenService = async ({ incomingRefreshToken }) => {
   if (!incomingRefreshToken) {
     throw new ApiError(401, "Unauthorized request");
   }
-
+  
   try {
     const decodedToken = jwt.verify(
       incomingRefreshToken,
@@ -375,6 +371,16 @@ const refreshAccessTokenService = async ({ incomingRefreshToken }) => {
   }
 };
 
+const getCurrentUserService = async ({ userId }) => {
+  const user = await User.findById(userId).select(USER_SAFE_SELECT);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return user;
+};
+
 export {
   registerUserService,
   loginUserService,
@@ -384,4 +390,5 @@ export {
   resendEmailVerificationService,
   logoutUserService,
   refreshAccessTokenService,
+  getCurrentUserService,
 };

@@ -21,15 +21,18 @@ const redisRateLimiter = ({
       const key = `rate-limit:${keyPrefix}:${identifier}`;
 
       const pipeline = redisConnection.pipeline();
-
       pipeline.incr(key);
-      pipeline.expire(key, windowSeconds);
       pipeline.ttl(key);
-
       const results = await pipeline.exec();
 
       const current = results[0][1];
-      const ttl = results[2][1];
+      let ttl = results[1][1];
+
+      if (ttl === -1) {
+        // Key has no TTL yet, so start the fixed window.
+        await redisConnection.expire(key, windowSeconds);
+        ttl = windowSeconds;
+      }
 
       res.setHeader("X-RateLimit-Limit", maxRequests);
       res.setHeader(
@@ -39,6 +42,7 @@ const redisRateLimiter = ({
       res.setHeader("X-RateLimit-Reset", ttl);
 
       if (current > maxRequests) {
+        res.setHeader("Retry-After", ttl);
         throw new ApiError(429, "Too many requests. Please try again later.");
       }
 
@@ -61,7 +65,8 @@ const redisRateLimiter = ({
 
 const globalRateLimiter = redisRateLimiter({
   keyPrefix: "global",
-  ...RATE_LIMITS.GLOBAL,
+  windowSeconds: 60,
+    maxRequests: 120,
 });
 
 const authRateLimiter = redisRateLimiter({

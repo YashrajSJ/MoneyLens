@@ -12,7 +12,7 @@ const getDateRangePreset = (preset) => {
 
   if (preset === "THIS_MONTH") {
     return {
-      from: new Date(now.getFullYear(), now.getMonth(), 1)
+      from: new Date(now.getFullYear(), now.getMonth(), 1)   // new Date(year, month, day)
         .toISOString()
         .slice(0, 10),
       to: now.toISOString().slice(0, 10),

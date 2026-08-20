@@ -7,7 +7,7 @@ import {
 
 export const NotificationFilters = ({ filters, onChange, onReset }) => {
   const updateFilter = (field, value) => {
-    onChange({
+    onChange({ 
       ...filters,
       [field]: value,
       page: 1,

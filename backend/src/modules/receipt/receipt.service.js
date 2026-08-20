@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import streamifier from "streamifier";
 
 import { cloudinary } from "../../config/cloudinary.js";
@@ -47,22 +47,6 @@ const uploadReceiptToCloudinary = (file) => {
 
     streamifier.createReadStream(file.buffer).pipe(uploadStream);
   });
-};
-
-const extractJsonFromAiText = (text) => {
-  const cleaned = text
-    .replace(/```json/gi, "")
-    .replace(/```/g, "")
-    .trim();
-
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-
-  if (start === -1 || end === -1 || end <= start) {
-    throw new ApiError(502, "AI response did not contain valid JSON");
-  }
-
-  return cleaned.slice(start, end + 1);
 };
 
 const normalizeExtractedReceiptData = (data) => {
@@ -133,32 +117,40 @@ const extractReceiptDataWithAI = async ({ imageUrl, mimeType }) => {
   const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
   const genAI = new GoogleGenerativeAI(process.env.AI_API_KEY);
+
+  const receiptSchema = {
+    type: SchemaType.OBJECT,
+    properties: {
+      merchantName: { type: SchemaType.STRING },
+      amount: { type: SchemaType.NUMBER },
+      date: { type: SchemaType.STRING, description: "YYYY-MM-DD format" },
+      category: { 
+        type: SchemaType.STRING, 
+        description: "groceries | food | shopping | travel | utilities | healthcare | entertainment | education | personal | bills | other-expense" 
+      },
+      type: { type: SchemaType.STRING, enum: ["EXPENSE", "INCOME"] },
+      paymentMethod: { type: SchemaType.STRING, enum: ["CARD", "CASH", "BANK_TRANSFER", "UPI", "OTHER"] },
+      description: { type: SchemaType.STRING },
+      confidence: { type: SchemaType.NUMBER }
+    },
+    required: ["merchantName", "amount", "date", "category", "type", "paymentMethod", "description", "confidence"]
+  };
+
   const model = genAI.getGenerativeModel({
     model: process.env.AI_MODEL || "gemini-3.1-flash-lite",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: receiptSchema,
+    }
   });
 
   const prompt = `
 Extract transaction data from this receipt image.
 
-Return only valid JSON. Do not include markdown.
-
-Schema:
-{
-  "merchantName": "string",
-  "amount": number,
-  "date": "YYYY-MM-DD",
-  "category": "groceries | food | shopping | travel | utilities | healthcare | entertainment | education | personal | bills | other-expense",
-  "type": "EXPENSE",
-  "paymentMethod": "CARD | CASH | BANK_TRANSFER | UPI | OTHER",
-  "description": "string",
-  "confidence": number
-}
-
 Rules:
-- If it is not a valid receipt, return {}.
+- If it is not a valid receipt, return an empty string for text fields and 0 for numbers.
 - amount must be the final total paid.
 - type should usually be EXPENSE for receipts.
-- Use only allowed category and payment method values.
 `;
 
   const result = await model.generateContent([
@@ -172,7 +164,7 @@ Rules:
   ]);
 
   const text = result.response.text();
-  const parsed = JSON.parse(extractJsonFromAiText(text));
+  const parsed = JSON.parse(text);
 
   const normalized = normalizeExtractedReceiptData(parsed);
   validateExtractedReceiptData(normalized);

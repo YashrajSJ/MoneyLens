@@ -34,7 +34,6 @@ const setCache = async (key, value, ttlSeconds) => {
   }
 };
 
-// SCAN is safe for this project scale. At very large scale, prefer tagging
 // cache keys or keeping per-user cache key sets to avoid broad pattern scans.
 
 const deleteCacheByPattern = async (pattern) => {
